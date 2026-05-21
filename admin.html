@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>와이엠 관리자 — 발주 목록</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --steel: #1a1f2e;
+  --steel-mid: #2d3447;
+  --accent: #1a3a8f;
+  --gold-grad: linear-gradient(135deg,#8e99a8 0%,#4a5260 40%,#9aa3b0 60%,#5a6272 100%);
+  --border: #d0d6e8;
+  --bg: #f4f5f8;
+  --surface: #fff;
+  --text: #0f1624;
+  --muted: #6b7494;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── 비밀번호 화면 ── */
+.lock-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; background: var(--steel);
+}
+.lock-box {
+  background: #fff; border-radius: 20px; padding: 40px 32px 28px;
+  width: 320px; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.lock-logo { font-size: 13px; font-weight: 900; letter-spacing: 2px; color: var(--steel); margin-bottom: 4px; }
+.lock-logo span { background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.lock-title { font-size: 15px; font-weight: 700; color: var(--steel); margin: 16px 0 4px; }
+.lock-sub { font-size: 11px; color: #8a96b0; margin-bottom: 20px; }
+.pw-dots { display: flex; justify-content: center; gap: 14px; margin-bottom: 22px; }
+.pw-dots span { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #c0c8dc; background: transparent; transition: all 0.15s; }
+.pw-dots span.filled { background: var(--accent); border-color: var(--accent); }
+.pw-numpad { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
+.pw-numpad button { padding: 13px 0; border-radius: 10px; border: 1.5px solid #e0e4f0; background: #f8f9fc; font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 600; color: var(--steel); cursor: pointer; transition: background 0.12s; -webkit-appearance: none; }
+.pw-numpad button:hover { background: #e8ecf8; }
+.pw-clear { color: #c0392b !important; font-size: 13px !important; font-family: 'Noto Sans KR', sans-serif !important; }
+.pw-error { display: none; color: #c0392b; font-size: 11px; margin-bottom: 8px; font-weight: 600; }
+.pw-error.show { display: block; }
+
+/* ── 관리자 메인 ── */
+.admin-wrap { display: none; flex-direction: column; min-height: 100vh; }
+.admin-wrap.show { display: flex; }
+
+.admin-header {
+  background: var(--steel);
+  padding: 14px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.admin-header-title { font-size: 18px; font-weight: 900; color: #fff; }
+.admin-header-title span { background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.admin-refresh-btn {
+  background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 7px; padding: 7px 16px; font-size: 12px; font-weight: 600;
+  cursor: pointer; -webkit-appearance: none; font-family: 'Noto Sans KR', sans-serif;
+  transition: background 0.15s;
+}
+.admin-refresh-btn:hover { background: rgba(255,255,255,0.2); }
+
+.admin-body { display: flex; flex: 1; overflow: hidden; }
+
+/* ── 사이드바 — 발주 목록 ── */
+.order-sidebar {
+  width: 320px; min-width: 280px; background: #fff;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.sidebar-title {
+  padding: 14px 18px; font-size: 12px; font-weight: 700;
+  color: var(--muted); letter-spacing: 1px; text-transform: uppercase;
+  border-bottom: 1px solid var(--border); background: #f8f9fc;
+}
+.order-list { flex: 1; overflow-y: auto; }
+.order-item {
+  padding: 14px 18px; border-bottom: 1px solid #eef0f8;
+  cursor: pointer; transition: background 0.12s;
+}
+.order-item:hover { background: #f0f4ff; }
+.order-item.active { background: #e8edff; border-left: 3px solid var(--accent); }
+.order-item-id { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+.order-item-company { font-size: 14px; font-weight: 700; color: var(--steel); margin: 3px 0; }
+.order-item-meta { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+.order-item-count { background: var(--accent); color: #fff; border-radius: 10px; padding: 1px 8px; font-size: 10px; font-weight: 700; }
+.order-empty { padding: 32px 18px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* ── 메인 — 견적서 ── */
+.quote-main {
+  flex: 1; overflow-y: auto; background: var(--bg);
+  display: flex; flex-direction: column;
+}
+.quote-placeholder {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 14px; flex-direction: column; gap: 12px;
+}
+.quote-placeholder .icon { font-size: 48px; opacity: 0.3; }
+
+/* 견적서 내용 */
+.quote-content { padding: 24px 28px 48px; display: flex; flex-direction: column; gap: 16px; }
+
+.quote-action-bar {
+  display: flex; gap: 10px; justify-content: flex-end;
+  padding: 12px 28px; background: #fff; border-bottom: 1px solid var(--border);
+}
+.btn-quote-pdf {
+  background: var(--steel); color: #fff; border: none; border-radius: 7px;
+  padding: 9px 20px; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  -webkit-appearance: none; transition: background 0.15s;
+}
+.btn-quote-pdf:hover { background: #2d3447; }
+
+/* 견적서 타이틀 */
+.q-title-bar {
+  background: var(--steel); padding: 16px 24px; text-align: center; border-radius: 10px 10px 0 0;
+}
+.q-title-bar h1 { font-size: 24px; font-weight: 900; color: #fff; }
+.q-title-bar h1 span { background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* 견적서 고객 정보 */
+.q-info-bar {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  background: #fff; border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 10px 10px; padding: 16px 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.q-info-left { display: flex; flex-direction: column; gap: 6px; }
+.qi-row { display: flex; align-items: center; gap: 10px; }
+.qi-label { font-size: 11px; font-weight: 700; color: var(--muted); min-width: 42px; }
+.qi-val { font-size: 13px; font-weight: 600; color: var(--steel); }
+.q-gugung { font-size: 11px; color: #8a96b0; margin-top: 4px; }
+.q-info-right { display: flex; flex-direction: column; gap: 6px; text-align: right; }
+.q-meta-row { display: flex; gap: 14px; justify-content: flex-end; font-size: 12px; }
+.q-meta-row span:first-child { color: #8a96b0; }
+.q-meta-row span:last-child { font-weight: 600; color: var(--steel); min-width: 110px; text-align: right; }
+
+/* 견적 테이블 */
+.q-table-wrap { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+.q-table { width: 100%; border-collapse: collapse; }
+.q-table thead tr { background: var(--steel-mid); }
+.q-table thead th { color: #fff; font-size: 11px; font-weight: 700; padding: 9px 7px; text-align: center; border-right: 1px solid rgba(255,255,255,0.12); white-space: nowrap; }
+.q-table thead th small { display: block; font-size: 9px; color: rgba(255,255,255,0.55); font-weight: 400; margin-top: 1px; }
+.q-table thead th:last-child { border-right: none; }
+.q-table tbody tr { border-bottom: 1px solid #eef0f8; transition: background 0.12s; }
+.q-table tbody tr:hover { background: #f5f7ff; }
+.q-table tbody td { padding: 8px 6px; text-align: center; border-right: 1px solid #eef0f8; font-size: 12px; }
+.q-table tbody td:last-child { border-right: none; }
+.q-input {
+  width: 100%; border: 1px solid transparent; border-radius: 5px;
+  background: transparent; font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px; color: var(--text); padding: 4px 5px; text-align: center;
+  outline: none; transition: border-color 0.15s, background 0.15s; -webkit-appearance: none;
+}
+.q-input:focus { border-color: var(--accent); background: #f0f4ff; }
+.q-input::placeholder { color: #c0c8dc; }
+.q-amount { font-family: 'DM Mono', monospace; font-weight: 700; color: var(--accent); font-size: 12px; }
+
+/* 합계 */
+.q-summary {
+  background: #fff; border-radius: 10px; padding: 16px 24px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.q-sum-row { display: flex; gap: 32px; min-width: 280px; justify-content: space-between; font-size: 13px; font-weight: 600; }
+.q-sum-row span:last-child { font-family: 'DM Mono', monospace; }
+.q-sum-row.muted { color: var(--muted); font-weight: 500; }
+.q-sum-row.total { font-size: 18px; font-weight: 900; color: var(--accent); }
+.q-divider { width: 280px; height: 1px; background: var(--border); }
+
+.q-footer { font-size: 11px; color: var(--muted); line-height: 1.8; padding: 10px 4px; }
+
+/* 인쇄 */
+@media print {
+  @page { size: A4 landscape; margin: 8mm; }
+  body > * { display: none !important; }
+  .admin-wrap { display: block !important; }
+  .lock-screen { display: none !important; }
+  .admin-header, .admin-body > .order-sidebar, .quote-action-bar { display: none !important; }
+  .quote-main { display: block !important; overflow: visible !important; }
+  .quote-content { padding: 0 !important; gap: 6px !important; }
+  .q-table { font-size: 9px !important; }
+  .q-table thead th, .q-table tbody td { padding: 5px 3px !important; font-size: 9px !important; }
+  .q-input { font-size: 9px !important; border: none !important; border-bottom: 1px solid #ccc !important; }
+  .q-title-bar h1 { font-size: 18px !important; }
+  .q-title-bar { border-radius: 0 !important; padding: 10px !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- 비밀번호 화면 -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-logo">YOUANDUS &nbsp;<span>와이엠</span></div>
+    <div class="lock-title">관리자 로그인</div>
+    <div class="lock-sub">비밀번호 4자리를 입력하세요</div>
+    <div class="pw-dots" id="pwDots">
+      <span></span><span></span><span></span><span></span>
+    </div>
+    <div class="pw-numpad">
+      <button type="button" onclick="pwInput('1')">1</button>
+      <button type="button" onclick="pwInput('2')">2</button>
+      <button type="button" onclick="pwInput('3')">3</button>
+      <button type="button" onclick="pwInput('4')">4</button>
+      <button type="button" onclick="pwInput('5')">5</button>
+      <button type="button" onclick="pwInput('6')">6</button>
+      <button type="button" onclick="pwInput('7')">7</button>
+      <button type="button" onclick="pwInput('8')">8</button>
+      <button type="button" onclick="pwInput('9')">9</button>
+      <button type="button" class="pw-clear" onclick="pwClear()">C</button>
+      <button type="button" onclick="pwInput('0')">0</button>
+      <button type="button" onclick="pwDelete()">⌫</button>
+    </div>
+    <div class="pw-error" id="pwError">비밀번호가 틀렸습니다</div>
+  </div>
+</div>
+
+<!-- 관리자 메인 -->
+<div class="admin-wrap" id="adminWrap">
+  <div class="admin-header">
+    <div class="admin-header-title">와이엠 &nbsp;<span>발주 관리</span></div>
+    <button type="button" class="admin-refresh-btn" onclick="loadOrders()">🔄 새로고침</button>
+  </div>
+
+  <div class="admin-body">
+    <!-- 사이드바: 발주 목록 -->
+    <div class="order-sidebar">
+      <div class="sidebar-title">발주 목록</div>
+      <div class="order-list" id="orderList">
+        <div class="order-empty">데이터를 불러오는 중...</div>
+      </div>
+    </div>
+
+    <!-- 메인: 견적서 -->
+    <div class="quote-main" id="quoteMain">
+      <div class="quote-placeholder" id="quotePlaceholder">
+        <div class="icon">📋</div>
+        <div>좌측에서 발주건을 선택하면<br>견적서가 자동 생성됩니다</div>
+      </div>
+      <div id="quoteArea" style="display:none; flex-direction:column;">
+        <div class="quote-action-bar">
+          <button type="button" class="btn-quote-pdf" onclick="window.print()">🖨 PDF 저장</button>
+        </div>
+        <div class="quote-content">
+          <!-- 타이틀 -->
+          <div class="q-title-bar">
+            <h1>와이엠 &nbsp;<span>21T 금속엣지</span>&nbsp; 견적서</h1>
+          </div>
+          <!-- 고객 정보 -->
+          <div class="q-info-bar">
+            <div class="q-info-left">
+              <div class="qi-row"><span class="qi-label">업체명</span><span class="qi-val" id="qCompany">—</span></div>
+              <div class="qi-row"><span class="qi-label">성&nbsp;&nbsp;&nbsp;명</span><span class="qi-val" id="qPerson">—</span></div>
+              <div class="qi-row"><span class="qi-label">연락처</span><span class="qi-val" id="qPhone">—</span></div>
+              <div class="q-gugung">귀중</div>
+            </div>
+            <div class="q-info-right">
+              <div class="q-meta-row"><span>견적일자</span><span id="qDate">—</span></div>
+              <div class="q-meta-row"><span>작성일</span><span id="qToday">—</span></div>
+              <div class="q-meta-row"><span>발주번호</span><span id="qOrderId">—</span></div>
+              <div class="q-meta-row"><span>담&nbsp;&nbsp;&nbsp;당</span><span>와이엠</span></div>
+            </div>
+          </div>
+          <!-- 견적 테이블 -->
+          <div class="q-table-wrap">
+            <table class="q-table">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>품목</th>
+                  <th>타입</th>
+                  <th>도어위치</th>
+                  <th>컬러</th>
+                  <th>도장</th>
+                  <th>가로<small>mm</small></th>
+                  <th>세로<small>mm</small></th>
+                  <th>보링위치</th>
+                  <th>손잡이길이</th>
+                  <th>손잡이위치</th>
+                  <th>수량<small>EA</small></th>
+                  <th>단가<small>원</small></th>
+                  <th>금액<small>원</small></th>
+                </tr>
+              </thead>
+              <tbody id="qTableBody"></tbody>
+            </table>
+          </div>
+          <!-- 합계 -->
+          <div class="q-summary">
+            <div class="q-sum-row"><span>공급가액 (부가세 별도)</span><span id="qSubtotal">₩ 0</span></div>
+            <div class="q-divider"></div>
+            <div class="q-sum-row muted"><span>부가세 (10%)</span><span id="qVat">₩ 0</span></div>
+            <div class="q-divider"></div>
+            <div class="q-sum-row total"><span>합계 금액</span><span id="qTotal">₩ 0</span></div>
+          </div>
+          <!-- 안내 -->
+          <div class="q-footer">
+            <p>※ 본 견적서의 유효기간은 발행일로부터 30일입니다.</p>
+            <p>※ 부가세는 별도이며, 위 금액에 포함되지 않습니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── 설정 ── */
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6BOU59RuG9uPgMeYu2_A7B7KtKgfGM9qwcA7ig4xrjfsLL08DsaCnGXP7RIDIDubi/exec'; // Apps Script 배포 후 여기에 붙여넣기
+var PW_CORRECT = '0027';
+var pwCurrent = '';
+
+/* ── 비밀번호 ── */
+function pwInput(num) {
+  if (pwCurrent.length >= 4) return;
+  pwCurrent += num;
+  updateDots();
+  if (pwCurrent.length === 4) setTimeout(checkPw, 180);
+}
+function pwDelete() { pwCurrent = pwCurrent.slice(0,-1); updateDots(); document.getElementById('pwError').classList.remove('show'); }
+function pwClear()  { pwCurrent = ''; updateDots(); document.getElementById('pwError').classList.remove('show'); }
+function updateDots() {
+  var dots = document.querySelectorAll('#pwDots span');
+  for (var i = 0; i < dots.length; i++) {
+    if (i < pwCurrent.length) dots[i].classList.add('filled');
+    else dots[i].classList.remove('filled');
+  }
+}
+function checkPw() {
+  if (pwCurrent === PW_CORRECT) {
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('adminWrap').classList.add('show');
+    loadOrders();
+  } else {
+    document.getElementById('pwError').classList.add('show');
+    pwCurrent = ''; updateDots();
+  }
+}
+
+/* ── 발주 목록 불러오기 ── */
+function loadOrders() {
+  document.getElementById('orderList').innerHTML = '<div class="order-empty">불러오는 중...</div>';
+  fetch(APPS_SCRIPT_URL + '?action=list')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.status !== 'success' || !data.orders || data.orders.length === 0) {
+        document.getElementById('orderList').innerHTML = '<div class="order-empty">접수된 발주가 없습니다</div>';
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < data.orders.length; i++) {
+        var o = data.orders[i];
+        html += '<div class="order-item" onclick="selectOrder(' + i + ')" id="oi_' + i + '" data-idx="' + i + '">' +
+          '<div class="order-item-id">' + o.orderId + '</div>' +
+          '<div class="order-item-company">' + (o.company || '업체명 없음') +
+            ' <span class="order-item-count">' + (o.rows ? o.rows.length : 0) + '건</span></div>' +
+          '<div class="order-item-meta"><span>' + (o.person || '') + ' ' + (o.phone || '') + '</span>' +
+            '<span>' + (o.quoteDate || o.submitTime || '') + '</span></div>' +
+          '</div>';
+      }
+      document.getElementById('orderList').innerHTML = html;
+      window._orders = data.orders;
+    })
+    .catch(function() {
+      document.getElementById('orderList').innerHTML = '<div class="order-empty">불러오기 실패 — URL을 확인하세요</div>';
+    });
+}
+
+/* ── 발주 선택 → 견적서 생성 ── */
+var qRowCount = 0;
+
+function selectOrder(idx) {
+  // 활성화 표시
+  var items = document.querySelectorAll('.order-item');
+  for (var i = 0; i < items.length; i++) items[i].classList.remove('active');
+  document.getElementById('oi_' + idx).classList.add('active');
+
+  var o = window._orders[idx];
+  if (!o) return;
+
+  // 고객 정보
+  document.getElementById('qCompany').textContent = o.company || '—';
+  document.getElementById('qPerson').textContent  = o.person  || '—';
+  document.getElementById('qPhone').textContent   = o.phone   || '—';
+  document.getElementById('qDate').textContent    = o.quoteDate || '—';
+  document.getElementById('qOrderId').textContent = o.orderId;
+
+  var today = new Date();
+  document.getElementById('qToday').textContent =
+    today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+
+  // 견적 테이블 생성
+  var tbody = document.getElementById('qTableBody');
+  tbody.innerHTML = '';
+  qRowCount = 0;
+  var rows = o.rows || [];
+  for (var j = 0; j < rows.length; j++) {
+    qRowCount++;
+    var r = rows[j];
+    var tr = document.createElement('tr');
+    tr.id = 'qr_' + qRowCount;
+    var n = qRowCount;
+    tr.innerHTML =
+      '<td style="font-family:\'DM Mono\',monospace;font-size:10px;color:#6b7494">' + (r.no || n) + '</td>' +
+      '<td style="font-weight:600">' + (r.item || '21T 금속') + '</td>' +
+      '<td>' + (r.type || '—') + '</td>' +
+      '<td>' + (r.direction || '—') + '</td>' +
+      '<td>' + (r.color || '—') + '</td>' +
+      '<td>' + (r.finish || '—') + '</td>' +
+      '<td style="font-family:\'DM Mono\',monospace">' + (r.sizeW || '—') + '</td>' +
+      '<td style="font-family:\'DM Mono\',monospace">' + (r.sizeH || '—') + '</td>' +
+      '<td style="font-size:11px">' + (r.boring || '—') + '</td>' +
+      '<td>' + (r.handleLen || '—') + '</td>' +
+      '<td>' + (r.handlePos || '—') + '</td>' +
+      '<td><input type="number" class="q-input q-qty" value="' + (r.qty || '') + '" placeholder="기입" style="width:46px" oninput="qRecalc(' + n + ')"></td>' +
+      '<td><input type="number" class="q-input q-unit" placeholder="기입" style="width:72px" oninput="qRecalc(' + n + ')"></td>' +
+      '<td class="q-amount" id="qa_' + n + '">—</td>';
+    tbody.appendChild(tr);
+  }
+
+  qTotalRecalc();
+  document.getElementById('quotePlaceholder').style.display = 'none';
+  document.getElementById('quoteArea').style.display = 'flex';
+}
+
+function qRecalc(n) {
+  var row = document.getElementById('qr_' + n);
+  if (!row) return;
+  var qty  = parseFloat(row.querySelector('.q-qty').value)  || 0;
+  var unit = parseFloat(row.querySelector('.q-unit').value) || 0;
+  var amt  = qty * unit;
+  document.getElementById('qa_' + n).textContent = amt > 0 ? '₩ ' + amt.toLocaleString() : '—';
+  qTotalRecalc();
+}
+
+function qTotalRecalc() {
+  var rows = document.querySelectorAll('#qTableBody tr');
+  var sub = 0;
+  for (var i = 0; i < rows.length; i++) {
+    var q = rows[i].querySelector('.q-qty');
+    var u = rows[i].querySelector('.q-unit');
+    sub += (parseFloat(q ? q.value : 0) || 0) * (parseFloat(u ? u.value : 0) || 0);
+  }
+  var vat = Math.round(sub * 0.1);
+  document.getElementById('qSubtotal').textContent = '₩ ' + sub.toLocaleString();
+  document.getElementById('qVat').textContent      = '₩ ' + vat.toLocaleString();
+  document.getElementById('qTotal').textContent    = '₩ ' + (sub + vat).toLocaleString();
+}
+</script>
+</body>
+</html>
