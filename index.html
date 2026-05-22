@@ -425,6 +425,88 @@
   .delivery-field input:focus { border-color: var(--accent); }
   .delivery-field input::placeholder { color: #b0b8cc; }
 
+  /* 기타 요청사항 */
+  .order-etc-bar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .order-etc-label {
+    font-size: 11px; font-weight: 700; color: var(--steel);
+    white-space: nowrap; padding-top: 8px; min-width: 90px;
+  }
+  .order-etc-area {
+    flex: 1; min-height: 60px; resize: vertical;
+    border: 1px solid var(--border); border-radius: 7px;
+    padding: 8px 12px; font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px; color: var(--text); outline: none;
+    background: #fafbfe; transition: border-color 0.2s; line-height: 1.6;
+  }
+  .order-etc-area:focus { border-color: var(--accent); background: #f5f7ff; }
+  .order-etc-area::placeholder { color: #b0b8cc; }
+
+  /* ── 도면 첨부 ── */
+  .drawing-bar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 14px 28px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .drawing-bar-top {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .btn-drawing-attach {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--steel); color: #fff;
+    border-radius: 7px; padding: 8px 16px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: background 0.2s;
+    user-select: none;
+  }
+  .btn-drawing-attach:hover { background: var(--steel-light); }
+  .drawing-hint { font-size: 11px; color: var(--text-muted); }
+
+  /* 미리보기 그리드 */
+  .drawing-preview {
+    display: flex; flex-wrap: wrap; gap: 10px;
+  }
+  .drawing-thumb {
+    position: relative; width: 110px; height: 90px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    overflow: hidden; background: #f0f2f7;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+    flex-shrink: 0;
+  }
+  .drawing-thumb img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .drawing-thumb-name {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(26,31,46,0.72); color: #fff;
+    font-size: 9px; padding: 2px 5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .drawing-thumb-del {
+    position: absolute; top: 4px; right: 4px;
+    background: rgba(192,57,43,0.85); color: #fff;
+    border: none; border-radius: 50%;
+    width: 18px; height: 18px; font-size: 11px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    -webkit-appearance: none; line-height: 1;
+  }
+  .drawing-thumb-del:hover { background: #c0392b; }
+
+  @media print {
+    .drawing-bar .btn-drawing-attach,
+    .drawing-thumb-del { display: none !important; }
+    .drawing-preview { gap: 6px; }
+    .drawing-thumb { width: 90px; height: 74px; }
+  }
+
   /* ── 인쇄 버튼 ── */
   .action-bar {
     margin-top: 0;
@@ -617,10 +699,23 @@
       <label>연락처</label>
       <input type="tel" id="deliveryPhone" placeholder="010 - 0000 - 0000">
     </div>
-    <div class="delivery-field">
-      <label>납품 일정</label>
-      <input type="text" id="deliveryDate" placeholder="납품 예정일 직접 입력">
+  </div>
+
+  <!-- 기타 요청사항 -->
+  <div class="order-etc-bar">
+    <label class="order-etc-label">기타 (요청사항)</label>
+    <textarea id="orderEtcText" class="order-etc-area" placeholder="기타 요청사항을 자유롭게 입력하세요"></textarea>
+  </div>
+
+  <!-- 도면 첨부 -->
+  <div class="drawing-bar">
+    <div class="drawing-bar-top">
+      <label class="order-etc-label">도면 첨부</label>
+      <label class="btn-drawing-attach" for="drawingInput">📎 이미지 선택</label>
+      <input type="file" id="drawingInput" accept="image/*" multiple style="display:none" onchange="handleDrawing(this)">
+      <span class="drawing-hint">JPG · PNG · GIF 등 이미지 파일 (여러 장 가능)</span>
     </div>
+    <div class="drawing-preview" id="drawingPreview"></div>
   </div>
 
   <!-- 액션 -->
@@ -694,12 +789,12 @@
 
   <div class="calc-body" id="calcPrintArea">
 
-    <!-- 견적서 타이틀 -->
+    <!-- 타이틀 -->
     <div class="quote-title-bar">
       <h1>와이엠 &nbsp;<span>21T 금속엣지</span>&nbsp; 견적서</h1>
     </div>
 
-    <!-- 견적서 상단 정보 -->
+    <!-- 고객 정보 -->
     <div class="quote-info-bar">
       <div class="quote-info-left">
         <div class="quote-info-grid">
@@ -720,9 +815,9 @@
       </div>
       <div class="quote-info-right">
         <div class="quote-meta-row"><span>견적일자</span><span id="quoteDateDisp">—</span></div>
-        <div class="quote-meta-row"><span>작성일</span><span id="quoteTodayDisp">—</span></div>
-        <div class="quote-meta-row"><span>담&nbsp;&nbsp;&nbsp;당</span><span>이창열 과장</span></div>
-        <div class="quote-meta-row"><span>연락처</span><span>010-7633-2220</span></div>
+        <div class="quote-meta-row"><span>작&nbsp;성&nbsp;일</span><span id="quoteTodayDisp">—</span></div>
+        <div class="quote-meta-row"><span>담&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;당</span><span>이창열 과장</span></div>
+        <div class="quote-meta-row"><span>연&nbsp;락&nbsp;처</span><span>010-7633-2220</span></div>
       </div>
     </div>
 
@@ -734,14 +829,17 @@
             <th>No.</th>
             <th>품목</th>
             <th>타입</th>
-            <th>도어 위치</th>
+            <th>도어위치</th>
             <th>컬러</th>
-            <th>도장 형태</th>
-            <th>완성 사이즈<br><small>가로 (mm)</small></th>
-            <th>완성 사이즈<br><small>세로 (mm)</small></th>
-            <th>수량<br><small>EA</small></th>
-            <th>단가<br><small>원</small></th>
-            <th>금액<br><small>원</small></th>
+            <th>도장</th>
+            <th>가로<small>mm</small></th>
+            <th>세로<small>mm</small></th>
+            <th>보링위치</th>
+            <th>손잡이길이</th>
+            <th>손잡이위치</th>
+            <th>수량<small>EA</small></th>
+            <th>단가<small>원</small></th>
+            <th>금액<small>원</small></th>
           </tr>
         </thead>
         <tbody id="calcBody"></tbody>
@@ -770,11 +868,11 @@
         <span class="qd-value" id="qDeliveryAddress">—</span>
       </div>
       <div class="qd-field">
-        <span class="qd-label">수령인</span>
+        <span class="qd-label">수&nbsp;령&nbsp;인</span>
         <span class="qd-value" id="qDeliveryPerson">—</span>
       </div>
       <div class="qd-field">
-        <span class="qd-label">연락처</span>
+        <span class="qd-label">연&nbsp;락&nbsp;처</span>
         <span class="qd-value" id="qDeliveryPhone">—</span>
       </div>
       <div class="qd-field">
@@ -1301,7 +1399,7 @@ function buildRowHTML(n) {
     /* 12. 도장 형태 */
     '<td><select class="cell-select" style="min-width:130px">' +
       '<option value="">선택</option>' +
-      '<option value="anodize">무광 아노다이징 (8-10일)</option>' +
+      '<option value="anodize">아노다이징 (8-9일)</option>' +
       '<option value="fluoro">불소도장 (납기 14일)</option>' +
     '</select></td>' +
     /* 13. 단가, 금액 제거 — 삭제 버튼 */
@@ -1381,6 +1479,46 @@ function printOrder() {
   // 견적서 닫기
   document.getElementById('calcPage').classList.remove('show');
   window.print();
+}
+
+/* ── 도면 이미지 첨부 ── */
+var drawingFiles = []; // {name, dataUrl}
+
+function handleDrawing(input) {
+  var files = input.files;
+  if (!files || files.length === 0) return;
+  for (var i = 0; i < files.length; i++) {
+    (function(file) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        drawingFiles.push({ name: file.name, dataUrl: e.target.result });
+        renderDrawingPreview();
+      };
+      reader.readAsDataURL(file);
+    })(files[i]);
+  }
+  input.value = ''; // 같은 파일 재선택 가능하게 초기화
+}
+
+function renderDrawingPreview() {
+  var preview = document.getElementById('drawingPreview');
+  preview.innerHTML = '';
+  for (var i = 0; i < drawingFiles.length; i++) {
+    (function(idx) {
+      var wrap = document.createElement('div');
+      wrap.className = 'drawing-thumb';
+      wrap.innerHTML =
+        '<img src="' + drawingFiles[idx].dataUrl + '" alt="도면">' +
+        '<span class="drawing-thumb-name">' + drawingFiles[idx].name + '</span>' +
+        '<button type="button" class="drawing-thumb-del" onclick="removeDrawing(' + idx + ')">✕</button>';
+      preview.appendChild(wrap);
+    })(i);
+  }
+}
+
+function removeDrawing(idx) {
+  drawingFiles.splice(idx, 1);
+  renderDrawingPreview();
 }
 
 /* ── 컬러 파렛트 모달 ── */
@@ -1505,7 +1643,7 @@ function collectOrderRows() {
 
     // 도장
     var finishSel = selects[selects.length - 1];
-    var finishMap = { anodize: '무광 아노다이징', fluoro: '불소도장' };
+    var finishMap = { anodize: '아노다이징', fluoro: '불소도장' };
     var finishVal = finishSel ? (finishMap[finishSel.value] || finishSel.value) : '';
 
     // 빈 행 제외
@@ -1680,11 +1818,48 @@ function buildQuoteFromOrder() {
     var finishSelects = row.querySelectorAll('select');
     var finishVal = '—';
     var finishKey = '';
-    var finishMap = { 'anodize': '무광 아노다이징', 'fluoro': '불소도장', '': '—' };
+    var finishMap = { 'anodize': '아노다이징', 'fluoro': '불소도장', '': '—' };
     if (finishSelects.length >= 3) {
       var fs = finishSelects[finishSelects.length - 1];
       finishKey = fs.value;
       finishVal = finishMap[finishKey] || finishKey || '—';
+    }
+
+    /* 보링 위치 텍스트 수집 */
+    var boringList = row.querySelector('.boring-list');
+    var boringText = '—';
+    if (boringList) {
+      var boringItems = boringList.querySelectorAll('.boring-item');
+      var bParts = [];
+      for (var b = 0; b < boringItems.length; b++) {
+        var bInputs = boringItems[b].querySelectorAll('input');
+        var bTop = bInputs[0] ? bInputs[0].value : '';
+        var bBot = bInputs[1] ? bInputs[1].value : '';
+        if (bTop || bBot) bParts.push('위:' + (bTop||'?') + ' / 아래:' + (bBot||'?'));
+      }
+      if (bParts.length) boringText = bParts.join(', ');
+    }
+
+    /* 손잡이 길이 */
+    var hlenRadio = row.querySelector('input[name^="hlen_"]:checked');
+    var hlenVal = '—';
+    if (hlenRadio) {
+      if (hlenRadio.value === '150') {
+        hlenVal = '150mm';
+      } else {
+        var hlenCustomInput = row.querySelector('.handle-len-custom input');
+        hlenVal = hlenCustomInput && hlenCustomInput.value ? hlenCustomInput.value + 'mm' : '별도';
+      }
+    }
+
+    /* 손잡이 위치 */
+    var hlocSel = row.querySelectorAll('select')[2];
+    var hlocExtra = row.querySelector('.handle-loc-extra input');
+    var hlocVal = '—';
+    if (hlocSel) {
+      hlocVal = hlocSel.value === 'custom'
+        ? '하단에서 ' + (hlocExtra && hlocExtra.value ? hlocExtra.value : '?') + 'mm'
+        : (hlocSel.value === 'none' ? '없음' : '—');
     }
 
     /* 견적서 행 생성 — 단가 자동계산: 세로 × 가로 × 2 × 39 */
@@ -1699,16 +1874,19 @@ function buildQuoteFromOrder() {
     var tr = document.createElement('tr');
     tr.id = 'crow_' + n;
     tr.innerHTML =
-      '<td style="font-family:\'DM Mono\',monospace;font-size:11px;color:#6b7494;width:36px">' + no + '</td>' +
-      '<td style="font-weight:600;min-width:70px">' + item + '</td>' +
-      '<td style="min-width:70px">' + typeVal + '</td>' +
-      '<td style="min-width:60px">' + dirVal + '</td>' +
-      '<td style="min-width:80px">' + colorVal + '</td>' +
-      '<td style="min-width:90px">' + finishVal + '</td>' +
-      '<td style="min-width:70px;font-family:\'DM Mono\',monospace">' + sizeW + '</td>' +
-      '<td style="min-width:70px;font-family:\'DM Mono\',monospace">' + sizeH + '</td>' +
-      '<td style="min-width:55px"><input type="number" class="calc-input calc-qty" value="' + qty + '" placeholder="기입" min="1" style="width:50px" oninput="calcRecalc(' + n + ')"></td>' +
-      '<td style="min-width:80px"><input type="number" class="calc-input calc-unit" value="' + (autoUnit || '') + '" placeholder="자동계산" min="0" style="width:80px" ' +
+      '<td style="font-family:\'DM Mono\',monospace;font-size:10px;color:#6b7494;width:30px">' + no + '</td>' +
+      '<td style="font-weight:600;min-width:60px">' + item + '</td>' +
+      '<td style="min-width:55px">' + typeVal + '</td>' +
+      '<td style="min-width:50px">' + dirVal + '</td>' +
+      '<td style="min-width:60px">' + colorVal + '</td>' +
+      '<td style="min-width:70px">' + finishVal + '</td>' +
+      '<td style="min-width:55px;font-family:\'DM Mono\',monospace">' + sizeW + '</td>' +
+      '<td style="min-width:55px;font-family:\'DM Mono\',monospace">' + sizeH + '</td>' +
+      '<td style="min-width:100px;font-size:11px">' + boringText + '</td>' +
+      '<td style="min-width:65px">' + hlenVal + '</td>' +
+      '<td style="min-width:80px">' + hlocVal + '</td>' +
+      '<td style="min-width:50px"><input type="number" class="calc-input calc-qty" value="' + qty + '" placeholder="기입" min="1" style="width:46px" oninput="calcRecalc(' + n + ')"></td>' +
+      '<td style="min-width:80px"><input type="number" class="calc-input calc-unit" value="' + (autoUnit || '') + '" placeholder="자동" min="0" style="width:76px" ' +
         'data-sizew="' + wNum + '" data-sizeh="' + hNum + '" data-finish="' + finishKey + '" oninput="calcRecalc(' + n + ')"></td>' +
       '<td class="calc-amount-cell" id="camt_' + n + '">' + (autoAmt > 0 ? '₩ ' + autoAmt.toLocaleString() : '—') + '</td>';
     tbody.appendChild(tr);
