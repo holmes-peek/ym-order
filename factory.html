@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>와이엠 21T 금속엣지 — 공장 발주서</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --steel: #1a1f2e;
+  --steel-mid: #2d3447;
+  --accent: #1a3a8f;
+  --gold-grad: linear-gradient(135deg,#8e99a8 0%,#4a5260 40%,#9aa3b0 60%,#5a6272 100%);
+  --border: #d0d6e8;
+  --bg: #f4f5f8;
+  --surface: #fff;
+  --text: #0f1624;
+  --muted: #6b7494;
+  --red: #c0392b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px 16px 60px; }
+
+.page-wrapper {
+  max-width: 1200px; margin: 0 auto;
+  background: #fff; border-radius: 14px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.10); overflow: hidden;
+}
+
+/* ── 타이틀 ── */
+.doc-title-bar {
+  background: var(--steel); padding: 18px 28px; text-align: center;
+}
+.doc-title-bar h1 { font-size: 26px; font-weight: 900; color: #fff; }
+.doc-title-bar h1 span {
+  background: var(--gold-grad);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.doc-title-bar .sub-tag {
+  display: inline-block; margin-left: 10px;
+  background: var(--red); color: #fff;
+  font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 20px;
+  vertical-align: middle; letter-spacing: 1px;
+}
+
+/* ── 발주 정보 ── */
+.order-info-bar {
+  background: #f8f9fc; border-bottom: 2px solid var(--steel);
+  padding: 14px 28px; display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;
+  justify-content: space-between;
+}
+.info-group { display: flex; flex-direction: column; gap: 3px; }
+.info-label { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.info-val { font-size: 14px; font-weight: 700; color: var(--steel); }
+.info-val.mono { font-family: 'DM Mono', monospace; }
+
+/* ── 테이블 ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 900px; }
+thead tr { background: var(--steel-mid); }
+thead th {
+  color: #fff; font-size: 11px; font-weight: 700; padding: 10px 7px;
+  text-align: center; border-right: 1px solid rgba(255,255,255,0.12); white-space: nowrap;
+}
+thead th small { display: block; font-size: 9px; color: rgba(255,255,255,0.55); font-weight: 400; margin-top: 1px; }
+thead th:last-child { border-right: none; }
+tbody tr { border-bottom: 1px solid var(--border); }
+tbody tr:hover { background: #f5f7ff; }
+tbody tr.row-w { background: #f0f7ff; }  /* 가로 행 */
+tbody tr.row-h1 { background: #fff8f0; } /* 세로1 행 */
+tbody tr.row-h2 { background: #f5fff0; } /* 세로2(보링) 행 */
+tbody td {
+  padding: 8px 7px; text-align: center; border-right: 1px solid var(--border);
+  font-size: 12px; vertical-align: middle;
+}
+tbody td:last-child { border-right: none; }
+.row-badge {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  padding: 2px 7px; border-radius: 10px; white-space: nowrap;
+}
+.badge-w  { background: #dbeafe; color: #1a3a8f; }
+.badge-h1 { background: #fde8d8; color: #9a4a10; }
+.badge-h2 { background: #d8f5d0; color: #1a6b10; }
+.val-mono { font-family: 'DM Mono', monospace; font-weight: 600; }
+.val-bold { font-weight: 700; }
+.val-muted { color: var(--muted); font-size: 11px; }
+
+/* ── 구분선 (품목 그룹) ── */
+tbody tr.group-divider td { border-top: 2px solid var(--steel-mid) !important; }
+
+/* ── 하단 납품 정보 ── */
+.delivery-section {
+  padding: 16px 28px; border-top: 2px solid var(--steel);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.delivery-row { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+.delivery-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+.delivery-field label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 0.5px; }
+.delivery-field input, .delivery-field select {
+  border: 1.5px solid var(--border); border-radius: 6px; padding: 7px 10px;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 13px; color: var(--text);
+  outline: none; background: #fff; transition: border-color 0.2s; -webkit-appearance: none;
+}
+.delivery-field input:focus, .delivery-field select:focus { border-color: var(--accent); }
+.delivery-field input::placeholder { color: #c0c8dc; }
+.delivery-field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a96b0'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
+}
+
+/* 기타 */
+.etc-row { display: flex; gap: 12px; align-items: flex-start; }
+.etc-label { font-size: 11px; font-weight: 700; color: var(--steel); white-space: nowrap; padding-top: 8px; min-width: 36px; }
+.etc-area {
+  flex: 1; min-height: 60px; resize: vertical; border: 1.5px solid var(--border);
+  border-radius: 7px; padding: 8px 12px; font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; color: var(--text); outline: none; background: #fafbfe;
+  transition: border-color 0.2s; line-height: 1.6;
+}
+.etc-area:focus { border-color: var(--accent); }
+.etc-area::placeholder { color: #c0c8dc; }
+
+/* ── 액션 바 ── */
+.action-bar {
+  padding: 14px 28px; background: #f8f9fc; border-top: 1px solid var(--border);
+  display: flex; gap: 10px; justify-content: flex-end;
+}
+.btn-back {
+  background: #fff; color: var(--steel); border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 10px 20px; font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none;
+  transition: background 0.15s;
+}
+.btn-back:hover { background: #f0f2f7; }
+.btn-pdf {
+  background: var(--steel); color: #fff; border: none; border-radius: 8px;
+  padding: 10px 24px; font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; font-weight: 700; cursor: pointer; -webkit-appearance: none;
+  transition: background 0.15s;
+}
+.btn-pdf:hover { background: var(--steel-mid); }
+
+/* ── 인쇄 ── */
+@media print {
+  @page { size: A4 landscape; margin: 8mm; }
+  body { background: #fff; padding: 0; }
+  .action-bar { display: none !important; }
+  .page-wrapper { box-shadow: none; border-radius: 0; }
+  table { min-width: unset !important; font-size: 9px; }
+  thead th, tbody td { padding: 5px 4px !important; font-size: 9px !important; }
+  .doc-title-bar h1 { font-size: 18px !important; }
+  .delivery-field input, .delivery-field select, .etc-area { border-color: #ccc !important; font-size: 10px !important; }
+}
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- 타이틀 -->
+  <div class="doc-title-bar">
+    <h1>와이엠 &nbsp;<span>21T 금속엣지</span>&nbsp; 공장 발주서 <span class="sub-tag">FACTORY</span></h1>
+  </div>
+
+  <!-- 발주 정보 -->
+  <div class="order-info-bar" id="orderInfoBar">
+    <div class="info-group">
+      <span class="info-label">발주번호</span>
+      <span class="info-val mono" id="fOrderId">—</span>
+    </div>
+    <div class="info-group">
+      <span class="info-label">업체명</span>
+      <span class="info-val" id="fCompany">—</span>
+    </div>
+    <div class="info-group">
+      <span class="info-label">담당자</span>
+      <span class="info-val" id="fPerson">—</span>
+    </div>
+    <div class="info-group">
+      <span class="info-label">연락처</span>
+      <span class="info-val mono" id="fPhone">—</span>
+    </div>
+    <div class="info-group">
+      <span class="info-label">견적일자</span>
+      <span class="info-val" id="fDate">—</span>
+    </div>
+    <div class="info-group">
+      <span class="info-label">작성일</span>
+      <span class="info-val" id="fToday">—</span>
+    </div>
+    <div class="info-group">
+      <span class="info-label">담당</span>
+      <span class="info-val">이창열 과장</span>
+    </div>
+  </div>
+
+  <!-- 공장 발주 테이블 -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>구분</th>
+          <th>No.</th>
+          <th>품목</th>
+          <th>사이즈<small>mm</small></th>
+          <th>수량<small>EA</small></th>
+          <th>타입</th>
+          <th>도어위치</th>
+          <th>손잡이길이</th>
+          <th>손잡이위치</th>
+          <th>보링위치</th>
+          <th>컬러</th>
+          <th>도장형태</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody id="factoryBody"></tbody>
+    </table>
+  </div>
+
+  <!-- 납품 정보 -->
+  <div class="delivery-section">
+    <div class="delivery-row">
+      <div class="delivery-field">
+        <label>납품처 주소</label>
+        <input type="text" id="fAddress" placeholder="납품 주소 입력">
+      </div>
+      <div class="delivery-field">
+        <label>수령자</label>
+        <input type="text" id="fRecipient" placeholder="수령자 이름">
+      </div>
+      <div class="delivery-field">
+        <label>납품 희망일자</label>
+        <input type="date" id="fDeliveryDate">
+      </div>
+      <div class="delivery-field">
+        <label>운송 수단</label>
+        <select id="fTransport">
+          <option value="">선택</option>
+          <option value="parcel">택배 / 화물</option>
+          <option value="truck">화물 트럭</option>
+        </select>
+      </div>
+    </div>
+    <div class="etc-row">
+      <span class="etc-label">기타</span>
+      <textarea class="etc-area" id="fEtc" placeholder="기타 사항을 입력하세요"></textarea>
+    </div>
+  </div>
+
+  <!-- 액션 -->
+  <div class="action-bar no-print">
+    <button type="button" class="btn-back" onclick="history.back()">← 뒤로가기</button>
+    <button type="button" class="btn-pdf" onclick="window.print()">🖨 PDF 저장</button>
+  </div>
+
+</div>
+
+<script>
+/* URL 파라미터에서 발주 데이터 읽기 */
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6BOU59RuG9uPgMeYu2_A7B7KtKgfGM9qwcA7ig4xrjfsLL08DsaCnGXP7RIDIDubi/exec';
+
+function getParam(name) {
+  var url = new URL(window.location.href);
+  return url.searchParams.get(name) || '';
+}
+
+function init() {
+  var orderId = getParam('orderId');
+
+  /* 오늘 날짜 */
+  var today = new Date();
+  document.getElementById('fToday').textContent =
+    today.getFullYear() + '-' +
+    String(today.getMonth()+1).padStart(2,'0') + '-' +
+    String(today.getDate()).padStart(2,'0');
+
+  if (!orderId) {
+    document.getElementById('factoryBody').innerHTML =
+      '<tr><td colspan="13" style="padding:24px;color:#c0392b;font-size:13px">' +
+      '⚠️ 발주번호가 없습니다.<br><small style="color:#8a96b0">주소창에 ?orderId=ORD-XXXXXXXX-XXXXXX 형식으로 입력해주세요.</small>' +
+      '</td></tr>';
+    return;
+  }
+
+  document.getElementById('fOrderId').textContent = orderId;
+  document.getElementById('factoryBody').innerHTML =
+    '<tr><td colspan="13" style="padding:20px;color:#1a3a8f">데이터를 불러오는 중...</td></tr>';
+
+  fetch(APPS_SCRIPT_URL + '?action=get&id=' + encodeURIComponent(orderId))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.status === 'success' && data.order) {
+        renderFactory(data.order);
+      } else {
+        document.getElementById('factoryBody').innerHTML =
+          '<tr><td colspan="13" style="padding:20px;color:#c0392b">해당 발주번호를 찾을 수 없습니다: ' + orderId + '</td></tr>';
+      }
+    })
+    .catch(function(err) {
+      document.getElementById('factoryBody').innerHTML =
+        '<tr><td colspan="13" style="padding:20px;color:#c0392b">데이터 로드 실패 — 네트워크를 확인해주세요.</td></tr>';
+    });
+}
+
+function renderFactory(order) {
+  /* 상단 정보 */
+  document.getElementById('fOrderId').textContent  = order.orderId   || '—';
+  document.getElementById('fCompany').textContent  = order.company   || '—';
+  document.getElementById('fPerson').textContent   = order.person    || '—';
+  document.getElementById('fPhone').textContent    = order.phone     || '—';
+  document.getElementById('fDate').textContent     = order.quoteDate || '—';
+
+  /* 납품 정보 자동 입력 */
+  if (order.address)   document.getElementById('fAddress').value   = order.address;
+  if (order.recipient) document.getElementById('fRecipient').value = order.recipient;
+  if (order.etc)       document.getElementById('fEtc').value       = order.etc;
+
+  /* 테이블 생성 */
+  var tbody = document.getElementById('factoryBody');
+  tbody.innerHTML = '';
+  var rows = order.rows || [];
+
+  for (var i = 0; i < rows.length; i++) {
+    var r   = rows[i];
+    var no  = r.no || (i + 1);
+    var w   = parseFloat(r.sizeW) || 0;
+    var h   = parseFloat(r.sizeH) || 0;
+    var qty = parseFloat(r.qty)   || 1;
+
+    /* ── 가로 행: (가로 - 3), 수량 * 2 ── */
+    var wSize   = w ? (w - 3) : '—';
+    var wQty    = qty * 2;
+    var trW     = document.createElement('tr');
+    trW.className = 'row-w' + (i === 0 ? ' group-divider' : '');
+    trW.innerHTML =
+      '<td><span class="row-badge badge-w">가로</span></td>' +
+      '<td class="val-mono">' + no + '</td>' +
+      '<td class="val-bold">' + (r.item || '21T 금속') + '</td>' +
+      '<td class="val-mono val-bold">' + wSize + ' mm</td>' +
+      '<td class="val-mono val-bold">' + wQty + ' EA</td>' +
+      '<td class="val-muted">—</td>' +
+      '<td class="val-muted">—</td>' +
+      '<td class="val-muted">—</td>' +
+      '<td class="val-muted">—</td>' +
+      '<td class="val-muted">—</td>' +
+      '<td>' + (r.color   || '—') + '</td>' +
+      '<td>' + formatFinish(r.finish) + '</td>' +
+      '<td class="val-muted"></td>';
+    tbody.appendChild(trW);
+
+    /* ── 세로1 행: 세로 * 갯수, 타입/도어/손잡이 표시, 보링 없음 ── */
+    var trH1 = document.createElement('tr');
+    trH1.className = 'row-h1';
+    trH1.innerHTML =
+      '<td><span class="row-badge badge-h1">세로①</span></td>' +
+      '<td class="val-mono">' + no + '</td>' +
+      '<td class="val-bold">' + (r.item || '21T 금속') + '</td>' +
+      '<td class="val-mono val-bold">' + (h || '—') + ' mm</td>' +
+      '<td class="val-mono val-bold">' + qty + ' EA</td>' +
+      '<td>' + formatType(r.type) + '</td>' +
+      '<td>' + formatDir(r.direction) + '</td>' +
+      '<td>' + (r.handleLen || '—') + '</td>' +
+      '<td>' + (r.handlePos || '—') + '</td>' +
+      '<td class="val-muted">—</td>' +
+      '<td>' + (r.color   || '—') + '</td>' +
+      '<td>' + formatFinish(r.finish) + '</td>' +
+      '<td class="val-muted"></td>';
+    tbody.appendChild(trH1);
+
+    /* ── 세로2 행: 세로 * 갯수, 보링 위치만 ── */
+    var trH2 = document.createElement('tr');
+    trH2.className = 'row-h2';
+    trH2.innerHTML =
+      '<td><span class="row-badge badge-h2">세로②</span></td>' +
+      '<td class="val-mono">' + no + '</td>' +
+      '<td class="val-bold">' + (r.item || '21T 금속') + '</td>' +
+      '<td class="val-mono val-bold">' + (h || '—') + ' mm</td>' +
+      '<td class="val-mono val-bold">' + qty + ' EA</td>' +
+      '<td class="val-muted">—</td>' +
+      '<td class="val-muted">—</td>' +
+      '<td class="val-muted">—</td>' +
+      '<td class="val-muted">—</td>' +
+      '<td style="font-size:11px;text-align:left;padding:6px 8px">' + (r.boring || '—') + '</td>' +
+      '<td>' + (r.color   || '—') + '</td>' +
+      '<td>' + formatFinish(r.finish) + '</td>' +
+      '<td class="val-muted"></td>';
+    tbody.appendChild(trH2);
+  }
+}
+
+function formatType(v) {
+  return v === 'edge' ? '엣지만' : v === 'handle' ? '손잡이 도어' : (v || '—');
+}
+function formatDir(v) {
+  return v === 'left' ? '좌경' : v === 'right' ? '우경' : v === 'none' ? '구분없음' : (v || '—');
+}
+function formatFinish(v) {
+  return v === 'anodize' ? '아노다이징' : v === 'fluoro' ? '불소도장' : (v || '—');
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
