@@ -498,11 +498,20 @@
   /* 색상 select 옵션 프리뷰 (JS로 처리) */
   select.color-select { min-width: 150px; }
 
+  /* 인쇄 모드 구분용 */
+  body.printing-order #calcPage,
+  body.printing-order #pwModal,
+  body.printing-order .float-cross-btn { display: none !important; }
+
+  body.printing-quote .page-wrapper,
+  body.printing-quote #pwModal,
+  body.printing-quote .float-cross-btn { display: none !important; }
+
   @media print {
     @page { size: A4 landscape; margin: 8mm; }
     body { background: white; padding: 0; font-size: 10px; }
     .btn-add, .btn-del, .action-bar, .add-row-bar,
-    .float-cross-btn, #pwModal, #calcPage { display: none !important; }
+    .float-cross-btn, #pwModal, #submitModal, #paletteModal { display: none !important; }
     .page-wrapper { max-width: 100%; box-shadow: none; border-radius: 0; }
     table { min-width: unset !important; font-size: 9px; }
     thead th { padding: 6px 4px; font-size: 9px; }
@@ -510,6 +519,26 @@
     .cell-input, .cell-select { font-size: 9px; padding: 2px 3px; }
     .doc-title-bar h1 { font-size: 20px; }
     .boring-add-btn, .btn-del { display: none !important; }
+    /* 견적서 인쇄 */
+    #calcPage { display: flex !important; position: static !important; background: #fff !important; flex-direction: column; }
+    .no-print { display: none !important; }
+    .calc-body { padding: 0 !important; gap: 6px !important; }
+    .calc-table-wrap { box-shadow: none !important; border: 1px solid #ccc !important; overflow: visible !important; }
+    .calc-table { font-size: 9px !important; min-width: unset !important; }
+    .calc-table thead th, .calc-table tbody td { padding: 5px 3px !important; font-size: 9px !important; }
+    .calc-input, .qi-input, .qd-input { border: none !important; border-bottom: 1px solid #ccc !important; background: transparent !important; font-size: 9px !important; }
+    .quote-footer { background: transparent !important; font-size: 9px !important; }
+    .quote-title-bar { border-radius: 0 !important; padding: 10px !important; }
+    .quote-title-bar h1 { font-size: 18px !important; }
+    .quote-info-bar { padding: 10px 14px !important; }
+    .calc-summary { padding: 10px 16px !important; }
+    .calc-sum-row { font-size: 11px !important; }
+    .calc-sum-row.total { font-size: 14px !important; }
+    .quote-delivery-bar { padding: 8px 14px !important; font-size: 9px !important; gap: 12px !important; }
+    .qd-label, .qd-value, .qd-input { font-size: 10px !important; }
+    .quote-etc-box { padding: 8px 14px !important; }
+    .quote-etc-label { font-size: 10px !important; }
+    .quote-etc-area { font-size: 10px !important; min-height: 40px !important; border: 1px solid #ccc !important; }
   }
 </style>
 </head>
@@ -578,22 +607,26 @@
   <div class="delivery-bar">
     <div class="delivery-field">
       <label>납품 장소</label>
-      <input type="text" placeholder="납품 주소를 입력하세요">
+      <input type="text" id="deliveryAddress" placeholder="납품 주소를 입력하세요">
     </div>
     <div class="delivery-field">
       <label>수령인</label>
-      <input type="text" placeholder="수령인 이름">
+      <input type="text" id="deliveryPerson" placeholder="수령인 이름">
     </div>
     <div class="delivery-field">
       <label>연락처</label>
-      <input type="tel" placeholder="010 - 0000 - 0000">
+      <input type="tel" id="deliveryPhone" placeholder="010 - 0000 - 0000">
+    </div>
+    <div class="delivery-field">
+      <label>납품 일정</label>
+      <input type="text" id="deliveryDate" placeholder="납품 예정일 직접 입력">
     </div>
   </div>
 
   <!-- 액션 -->
   <div class="action-bar">
     <button type="button" class="btn-color-palette" onclick="openPalette()">🎨 컬러 파렛트</button>
-    <button type="button" class="btn-print" onclick="window.print()">🖨 인쇄 / PDF</button>
+    <button type="button" class="btn-print" onclick="printOrder()">🖨 인쇄 / PDF 저장</button>
     <button type="button" class="btn-submit" onclick="submitOrder()">📤 발주서 제출</button>
   </div>
 </div>
@@ -656,7 +689,7 @@
 <div id="calcPage" class="calc-page">
   <div class="calc-header no-print">
     <button type="button" class="calc-back-btn" onclick="closeCalcPage()">← 발주서로 돌아가기</button>
-    <button type="button" class="calc-pdf-btn" onclick="printCalcPage()">🖨 PDF 저장</button>
+    <button type="button" class="calc-pdf-btn" onclick="printQuote()">🖨 PDF 저장</button>
   </div>
 
   <div class="calc-body" id="calcPrintArea">
@@ -688,7 +721,8 @@
       <div class="quote-info-right">
         <div class="quote-meta-row"><span>견적일자</span><span id="quoteDateDisp">—</span></div>
         <div class="quote-meta-row"><span>작성일</span><span id="quoteTodayDisp">—</span></div>
-        <div class="quote-meta-row"><span>담&nbsp;&nbsp;&nbsp;당</span><span>와이엠</span></div>
+        <div class="quote-meta-row"><span>담&nbsp;&nbsp;&nbsp;당</span><span>이창열 과장</span></div>
+        <div class="quote-meta-row"><span>연락처</span><span>010-7633-2220</span></div>
       </div>
     </div>
 
@@ -728,6 +762,33 @@
       <p>※ 본 견적서의 유효기간은 발행일로부터 30일입니다.</p>
       <p>※ 부가세는 별도이며, 위 금액에 포함되지 않습니다.</p>
     </div>
+
+    <!-- 납품 정보 -->
+    <div class="quote-delivery-bar">
+      <div class="qd-field">
+        <span class="qd-label">납품 장소</span>
+        <span class="qd-value" id="qDeliveryAddress">—</span>
+      </div>
+      <div class="qd-field">
+        <span class="qd-label">수령인</span>
+        <span class="qd-value" id="qDeliveryPerson">—</span>
+      </div>
+      <div class="qd-field">
+        <span class="qd-label">연락처</span>
+        <span class="qd-value" id="qDeliveryPhone">—</span>
+      </div>
+      <div class="qd-field">
+        <span class="qd-label">납품 일자</span>
+        <input type="date" class="qd-input" id="qDeliveryDate" style="min-width:140px">
+      </div>
+    </div>
+
+    <!-- 기타 공란 -->
+    <div class="quote-etc-box">
+      <div class="quote-etc-label">기타</div>
+      <textarea class="quote-etc-area" id="qEtcText" placeholder="기타 사항을 자유롭게 입력하세요"></textarea>
+    </div>
+
   </div>
 </div>
 
@@ -1073,7 +1134,58 @@
 }
 .calc-pdf-btn:hover { background: #e8ecf8; }
 
-/* ── 인쇄 시 견적서만 (가로 A4) ── */
+/* ── 견적서 납품 정보 바 ── */
+.quote-delivery-bar {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 20px;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.qd-field { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 160px; }
+.qd-label {
+  font-size: 11px; font-weight: 700; color: var(--steel);
+  white-space: nowrap; letter-spacing: 0.3px;
+}
+.qd-value { font-size: 13px; font-weight: 600; color: #1a1f2e; }
+.qd-input {
+  flex: 1; border: none; border-bottom: 1.5px solid var(--border);
+  padding: 4px 4px; font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; color: var(--text); outline: none; background: transparent;
+  transition: border-color 0.2s; min-width: 120px;
+}
+.qd-input:focus { border-color: var(--accent); }
+.qd-input::placeholder { color: #c0c8dc; }
+
+/* ── 기타 공란 ── */
+.quote-etc-box {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 20px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.quote-etc-label {
+  font-size: 11px; font-weight: 700; color: var(--steel);
+  white-space: nowrap; padding-top: 6px; min-width: 28px;
+}
+.quote-etc-area {
+  flex: 1; min-height: 64px; resize: vertical;
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 8px 10px; font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px; color: var(--text); outline: none;
+  background: #fafbfe; transition: border-color 0.2s;
+  line-height: 1.6;
+}
+.quote-etc-area:focus { border-color: var(--accent); background: #f0f4ff; }
+.quote-etc-area::placeholder { color: #c0c8dc; }
 @media print {
   @page { size: A4 landscape; margin: 8mm; }
   body > * { display: none !important; }
@@ -1263,6 +1375,13 @@ function recalc() {
 
 /* ── 설정 ── */
 var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6BOU59RuG9uPgMeYu2_A7B7KtKgfGM9qwcA7ig4xrjfsLL08DsaCnGXP7RIDIDubi/exec'; // Apps Script 배포 후 여기 붙여넣기
+
+/* ── 발주서 인쇄 ── */
+function printOrder() {
+  // 견적서 닫기
+  document.getElementById('calcPage').classList.remove('show');
+  window.print();
+}
 
 /* ── 컬러 파렛트 모달 ── */
 function openPalette() {
@@ -1480,6 +1599,9 @@ function openCalcPage() {
 function closeCalcPage() {
   document.getElementById('calcPage').classList.remove('show');
 }
+function printQuote() {
+  window.print();
+}
 function printCalcPage() {
   window.print();
 }
@@ -1502,6 +1624,16 @@ function buildQuoteFromOrder() {
     today.getFullYear() + '-' +
     String(today.getMonth()+1).padStart(2,'0') + '-' +
     String(today.getDate()).padStart(2,'0');
+
+  /* 납품 정보 연동 */
+  var addr   = document.getElementById('deliveryAddress') ? document.getElementById('deliveryAddress').value : '';
+  var dPerson= document.getElementById('deliveryPerson')  ? document.getElementById('deliveryPerson').value  : '';
+  var dPhone = document.getElementById('deliveryPhone')   ? document.getElementById('deliveryPhone').value   : '';
+  var dDate  = document.getElementById('deliveryDate')    ? document.getElementById('deliveryDate').value    : '';
+  document.getElementById('qDeliveryAddress').textContent = addr    || '—';
+  document.getElementById('qDeliveryPerson').textContent  = dPerson || '—';
+  document.getElementById('qDeliveryPhone').textContent   = dPhone  || '—';
+  document.getElementById('qDeliveryDate').value          = dDate   || '';
 
   /* 발주서 행 읽기 */
   var tbody = document.getElementById('calcBody');
@@ -1547,13 +1679,23 @@ function buildQuoteFromOrder() {
     /* 도장 형태 */
     var finishSelects = row.querySelectorAll('select');
     var finishVal = '—';
+    var finishKey = '';
     var finishMap = { 'anodize': '무광 아노다이징', 'fluoro': '불소도장', '': '—' };
     if (finishSelects.length >= 3) {
       var fs = finishSelects[finishSelects.length - 1];
-      finishVal = finishMap[fs.value] || fs.value || '—';
+      finishKey = fs.value;
+      finishVal = finishMap[finishKey] || finishKey || '—';
     }
 
-    /* 견적서 행 생성 */
+    /* 견적서 행 생성 — 단가 자동계산: 세로 × 가로 × 2 × 39 */
+    /* 불소도장 선택 시 × 1.15 추가 적용 */
+    var wNum = parseFloat(sizeW) || 0;
+    var hNum = parseFloat(sizeH) || 0;
+    var baseUnit = wNum && hNum ? (hNum * wNum * 2 * 39) : 0;
+    var autoUnit = baseUnit ? Math.round(baseUnit * (finishKey === 'fluoro' ? 1.15 : 1) / 10) * 10 : 0;
+    var qtyNum = parseFloat(qty) || 0;
+    var autoAmt = autoUnit * qtyNum;
+
     var tr = document.createElement('tr');
     tr.id = 'crow_' + n;
     tr.innerHTML =
@@ -1566,8 +1708,9 @@ function buildQuoteFromOrder() {
       '<td style="min-width:70px;font-family:\'DM Mono\',monospace">' + sizeW + '</td>' +
       '<td style="min-width:70px;font-family:\'DM Mono\',monospace">' + sizeH + '</td>' +
       '<td style="min-width:55px"><input type="number" class="calc-input calc-qty" value="' + qty + '" placeholder="기입" min="1" style="width:50px" oninput="calcRecalc(' + n + ')"></td>' +
-      '<td style="min-width:80px"><input type="number" class="calc-input calc-unit" placeholder="기입" min="0" style="width:75px" oninput="calcRecalc(' + n + ')"></td>' +
-      '<td class="calc-amount-cell" id="camt_' + n + '">—</td>';
+      '<td style="min-width:80px"><input type="number" class="calc-input calc-unit" value="' + (autoUnit || '') + '" placeholder="자동계산" min="0" style="width:80px" ' +
+        'data-sizew="' + wNum + '" data-sizeh="' + hNum + '" data-finish="' + finishKey + '" oninput="calcRecalc(' + n + ')"></td>' +
+      '<td class="calc-amount-cell" id="camt_' + n + '">' + (autoAmt > 0 ? '₩ ' + autoAmt.toLocaleString() : '—') + '</td>';
     tbody.appendChild(tr);
   }
 
@@ -1577,8 +1720,20 @@ function buildQuoteFromOrder() {
 function calcRecalc(n) {
   var row = document.getElementById('crow_' + n);
   if (!row) return;
-  var qty = parseFloat(row.querySelector('.calc-qty').value) || 0;
-  var unit = parseFloat(row.querySelector('.calc-unit').value) || 0;
+  var qty    = parseFloat(row.querySelector('.calc-qty').value) || 0;
+  var unitEl = row.querySelector('.calc-unit');
+  var unit   = parseFloat(unitEl.value) || 0;
+
+  /* 단가가 비어있으면 사이즈 + 도장형태 기반 자동계산 */
+  if (!unit) {
+    var w       = parseFloat(unitEl.getAttribute('data-sizew')) || 0;
+    var h       = parseFloat(unitEl.getAttribute('data-sizeh')) || 0;
+    var finish  = unitEl.getAttribute('data-finish') || '';
+    var base    = w && h ? (h * w * 2 * 39) : 0;
+    unit = base ? Math.round(base * (finish === 'fluoro' ? 1.15 : 1) / 10) * 10 : 0;
+    if (unit) unitEl.value = unit;
+  }
+
   var amt = qty * unit;
   document.getElementById('camt_' + n).textContent = amt > 0 ? '₩ ' + amt.toLocaleString() : '—';
   calcTotalRecalc();
