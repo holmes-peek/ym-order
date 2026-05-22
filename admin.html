@@ -117,6 +117,56 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 }
 .btn-quote-pdf:hover { background: #2d3447; }
 
+.btn-quote-email {
+  background: var(--accent); color: #fff; border: none; border-radius: 7px;
+  padding: 9px 20px; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  -webkit-appearance: none; transition: background 0.15s;
+}
+.btn-quote-email:hover { background: #0f2a6e; }
+.btn-quote-email:disabled { background: #8a96b0; cursor: not-allowed; }
+
+.btn-factory {
+  background: #1a6b10; color: #fff; border: none; border-radius: 7px;
+  padding: 9px 20px; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  -webkit-appearance: none; transition: background 0.15s;
+}
+.btn-factory:hover { background: #145a0d; }
+
+/* 이메일 발송 모달 */
+.email-modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(10,14,28,0.55); z-index: 400;
+  align-items: center; justify-content: center;
+}
+.email-modal-overlay.show { display: flex; }
+.email-modal-box {
+  background: #fff; border-radius: 14px; padding: 28px 24px;
+  width: 340px; box-shadow: 0 12px 48px rgba(0,0,0,0.2);
+}
+.email-modal-title { font-size: 15px; font-weight: 800; color: var(--steel); margin-bottom: 16px; }
+.email-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.email-field label { font-size: 11px; font-weight: 600; color: var(--muted); }
+.email-field input {
+  border: 1.5px solid var(--border); border-radius: 7px; padding: 8px 12px;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 13px; outline: none;
+  transition: border-color 0.2s;
+}
+.email-field input:focus { border-color: var(--accent); }
+.email-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+.email-btn-cancel {
+  background: #f0f2f7; color: var(--steel); border: none; border-radius: 7px;
+  padding: 9px 18px; font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif; -webkit-appearance: none;
+}
+.email-btn-send {
+  background: var(--accent); color: #fff; border: none; border-radius: 7px;
+  padding: 9px 18px; font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif; -webkit-appearance: none;
+}
+.email-status { font-size: 12px; margin-top: 8px; text-align: center; min-height: 18px; }
+
 /* 견적서 타이틀 */
 .q-title-bar {
   background: var(--steel); padding: 16px 24px; text-align: center; border-radius: 10px 10px 0 0;
@@ -191,6 +241,53 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   .q-title-bar h1 { font-size: 18px !important; }
   .q-title-bar { border-radius: 0 !important; padding: 10px !important; }
 }
+
+.btn-quote-email {
+  background: #1a3a8f; color: #fff; border: none; border-radius: 7px;
+  padding: 9px 20px; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: "Noto Sans KR", sans-serif;
+  -webkit-appearance: none; transition: background 0.15s;
+}
+.btn-quote-email:hover { background: #0f2a6e; }
+.btn-quote-email:disabled { background: #8a96b0; cursor: not-allowed; }
+.btn-factory {
+  background: #1a6b10; color: #fff; border: none; border-radius: 7px;
+  padding: 9px 20px; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: "Noto Sans KR", sans-serif;
+  -webkit-appearance: none; transition: background 0.15s;
+}
+.btn-factory:hover { background: #145a0d; }
+.email-modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(10,14,28,0.55); z-index: 400;
+  align-items: center; justify-content: center;
+}
+.email-modal-overlay.show { display: flex; }
+.email-modal-box {
+  background: #fff; border-radius: 14px; padding: 28px 24px;
+  width: 340px; box-shadow: 0 12px 48px rgba(0,0,0,0.2);
+}
+.email-modal-title { font-size: 15px; font-weight: 800; color: #1a1f2e; margin-bottom: 16px; }
+.email-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.email-field label { font-size: 11px; font-weight: 600; color: #6b7494; }
+.email-field input {
+  border: 1.5px solid #d0d6e8; border-radius: 7px; padding: 8px 12px;
+  font-family: "Noto Sans KR", sans-serif; font-size: 13px; outline: none; transition: border-color 0.2s;
+}
+.email-field input:focus { border-color: #1a3a8f; }
+.email-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+.email-btn-cancel {
+  background: #f0f2f7; color: #1a1f2e; border: none; border-radius: 7px;
+  padding: 9px 18px; font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: "Noto Sans KR", sans-serif; -webkit-appearance: none;
+}
+.email-btn-send {
+  background: #1a3a8f; color: #fff; border: none; border-radius: 7px;
+  padding: 9px 18px; font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: "Noto Sans KR", sans-serif; -webkit-appearance: none;
+}
+.email-btn-send:disabled { background: #8a96b0; cursor: not-allowed; }
+.email-status { font-size: 12px; margin-top: 8px; text-align: center; min-height: 18px; }
 </style>
 </head>
 <body>
@@ -247,6 +344,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
       <div id="quoteArea" style="display:none; flex-direction:column;">
         <div class="quote-action-bar">
           <button type="button" class="btn-quote-pdf" onclick="window.print()">🖨 PDF 저장</button>
+          <button type="button" class="btn-quote-email" id="btnSendEmail" onclick="sendQuoteEmail()">📧 견적서 이메일 발송</button>
+          
         </div>
         <div class="quote-content">
           <!-- 타이틀 -->
@@ -307,6 +406,26 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 이메일 발송 모달 -->
+<div class="email-modal-overlay" id="emailModal">
+  <div class="email-modal-box">
+    <div class="email-modal-title">📧 견적서 이메일 발송</div>
+    <div class="email-field">
+      <label>수신 이메일</label>
+      <input type="email" id="emailTo" placeholder="customer@email.com">
+    </div>
+    <div class="email-field">
+      <label>수신자 이름</label>
+      <input type="text" id="emailName" placeholder="고객명">
+    </div>
+    <div class="email-status" id="emailStatus"></div>
+    <div class="email-btns">
+      <button type="button" class="email-btn-cancel" onclick="closeEmailModal()">취소</button>
+      <button type="button" class="email-btn-send" onclick="doSendEmail()">발송</button>
     </div>
   </div>
 </div>
@@ -384,6 +503,7 @@ function selectOrder(idx) {
 
   var o = window._orders[idx];
   if (!o) return;
+  window._currentOrderId = o.orderId;
 
   // 고객 정보
   document.getElementById('qCompany').textContent = o.company || '—';
@@ -452,6 +572,74 @@ function qTotalRecalc() {
   document.getElementById('qSubtotal').textContent = '₩ ' + sub.toLocaleString();
   document.getElementById('qVat').textContent      = '₩ ' + vat.toLocaleString();
   document.getElementById('qTotal').textContent    = '₩ ' + (sub + vat).toLocaleString();
+}
+
+/* ── 견적서 이메일 발송 ── */
+function sendQuoteEmail() {
+  if (!window._currentOrderId) { alert('먼저 발주건을 선택해주세요.'); return; }
+  var o = window._orders ? window._orders.find(function(x){ return x.orderId===window._currentOrderId; }) : null;
+  document.getElementById('emailName').value = o ? (o.company||'') : '';
+  document.getElementById('emailTo').value   = '';
+  document.getElementById('emailStatus').textContent = '';
+  document.getElementById('emailStatus').style.color = '';
+  document.getElementById('emailModal').classList.add('show');
+}
+function closeEmailModal() {
+  document.getElementById('emailModal').classList.remove('show');
+}
+function doSendEmail() {
+  var to   = document.getElementById('emailTo').value.trim();
+  var name = document.getElementById('emailName').value.trim() || '고객';
+  if (!to) { document.getElementById('emailStatus').textContent = '이메일을 입력해주세요.'; return; }
+  document.getElementById('emailStatus').textContent = '발송 중...';
+  document.getElementById('emailStatus').style.color = '#1a3a8f';
+  document.querySelector('.email-btn-send').disabled = true;
+
+  var quoteHtml = '<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    + '<tr style="background:#2d3447;color:#fff">'
+    + '<th style="padding:7px">No.</th><th>품목</th><th>타입</th><th>도어위치</th>'
+    + '<th>컬러</th><th>도장</th><th>가로</th><th>세로</th><th>보링</th>'
+    + '<th>손잡이길이</th><th>손잡이위치</th><th>수량</th><th>단가</th><th>금액</th></tr>';
+  var qrows = document.querySelectorAll('#qTableBody tr');
+  for (var i = 0; i < qrows.length; i++) {
+    var cells = qrows[i].querySelectorAll('td');
+    quoteHtml += '<tr style="border-bottom:1px solid #eee">';
+    for (var j = 0; j < cells.length; j++) {
+      quoteHtml += '<td style="padding:5px;text-align:center">' + cells[j].textContent + '</td>';
+    }
+    quoteHtml += '</tr>';
+  }
+  quoteHtml += '</table><p style="margin-top:10px;font-size:12px">합계: ' + document.getElementById('qTotal').textContent + ' (부가세 포함)</p>';
+
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action:'sendQuote', toEmail:to, toName:name, orderId:window._currentOrderId, quoteHtml:quoteHtml })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if (data.status==='success') {
+      document.getElementById('emailStatus').style.color = '#1a6b10';
+      document.getElementById('emailStatus').textContent = '✅ 발송 완료!';
+      setTimeout(closeEmailModal, 1500);
+    } else {
+      document.getElementById('emailStatus').style.color = '#c0392b';
+      document.getElementById('emailStatus').textContent = '❌ ' + data.message;
+    }
+    document.querySelector('.email-btn-send').disabled = false;
+  })
+  .catch(function(){
+    document.getElementById('emailStatus').style.color = '#c0392b';
+    document.getElementById('emailStatus').textContent = '❌ 발송 실패';
+    document.querySelector('.email-btn-send').disabled = false;
+  });
+}
+
+/* ── 공장 발주서 ── */
+function openFactory() {
+  if (!window._currentOrderId) { alert('먼저 발주건을 선택해주세요.'); return; }
+  var o = window._orders ? window._orders.find(function(x){ return x.orderId===window._currentOrderId; }) : null;
+  if (o) { try { sessionStorage.setItem('factoryOrder', JSON.stringify(o)); } catch(e){} }
+  window.open('factory.html?orderId=' + encodeURIComponent(window._currentOrderId), '_blank');
 }
 </script>
 </body>
