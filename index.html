@@ -648,7 +648,7 @@
         <input type="tel" id="customerPhone" placeholder="010-0000-0000">
       </div>
       <div class="meta-field">
-        <label>견적 일자</label>
+        <label>발주 일자</label>
         <input type="date" id="orderDate">
       </div>
     </div>
@@ -1352,20 +1352,21 @@ function buildRowHTML(n) {
       '<option value="edge">엣지만</option>' +
       '<option value="handle">손잡이 도어</option>' +
     '</select></td>' +
-    /* 7. 도어 위치 */
-    '<td><select class="cell-select" style="min-width:80px">' +
+    /* 7. 도어 위치 — 마이다 선택 시 보링 비활성화 */
+    '<td><select class="cell-select dir-select" id="dirSelect_' + n + '" style="min-width:80px" onchange="onDirChange(' + n + ')">' +
       '<option value="">선택</option>' +
+      '<option value="maida">마이다</option>' +
       '<option value="left">좌경</option>' +
       '<option value="right">우경</option>' +
       '<option value="none">구분없음</option>' +
     '</select></td>' +
     /* 8. 보링 위치 — 추가 버튼만, 클릭 시 위/아래 쌍 생성 */
-    '<td class="boring-cell">' +
+    '<td class="boring-cell" id="boringCell_' + n + '">' +
       '<div class="boring-list" id="boringList_' + n + '"></div>' +
-      '<button type="button" class="boring-add-btn" onclick="addBoring(' + n + ')">+ 보링 추가</button>' +
+      '<button type="button" class="boring-add-btn" id="boringBtn_' + n + '" onclick="addBoring(' + n + ')">+ 보링 추가</button>' +
     '</td>' +
     /* 9. 손잡이 길이 — 라디오 체크박스 */
-    '<td class="handle-len-cell">' +
+    '<td class="handle-len-cell" id="hlenCell_' + n + '">' +
       '<div class="handle-len-inner">' +
         '<label class="handle-len-option">' +
           '<input type="radio" name="hlen_' + n + '" value="150" onclick="toggleHandleLen(this,' + n + ')">' +
@@ -1382,7 +1383,7 @@ function buildRowHTML(n) {
       '</div>' +
     '</td>' +
     /* 10. 손잡이 위치 */
-    '<td class="handle-loc-cell">' +
+    '<td class="handle-loc-cell" id="hlocCell_' + n + '">' +
       '<div class="handle-loc-inner">' +
         '<select class="cell-select" onchange="toggleHandleLoc(this,' + n + ')" style="min-width:110px">' +
           '<option value="none">없음</option>' +
@@ -1402,8 +1403,55 @@ function buildRowHTML(n) {
       '<option value="anodize">아노다이징 (8-9일)</option>' +
       '<option value="fluoro">불소도장 (납기 14일)</option>' +
     '</select></td>' +
-    /* 13. 단가, 금액 제거 — 삭제 버튼 */
+    /* 삭제 버튼 */
     '<td><button type="button" class="btn-del" onclick="delRow(' + n + ')">✕</button></td>';
+}
+
+/* 타입 변경 — 엣지만 선택 시 손잡이 길이/위치 비활성화 */
+function onTypeChange(n) {
+  var typeSel = document.getElementById('typeSelect_' + n);
+  var hlenCell = document.getElementById('hlenCell_' + n);
+  var hlocCell = document.getElementById('hlocCell_' + n);
+  var isEdge = typeSel && typeSel.value === 'edge';
+
+  if (hlenCell) {
+    hlenCell.style.opacity = isEdge ? '0.35' : '1';
+    hlenCell.style.pointerEvents = isEdge ? 'none' : '';
+    /* 라디오 초기화 */
+    if (isEdge) {
+      var radios = hlenCell.querySelectorAll('input[type="radio"]');
+      for (var i = 0; i < radios.length; i++) radios[i].checked = false;
+      var hlenInput = document.getElementById('hlenInput_' + n);
+      if (hlenInput) { hlenInput.disabled = true; hlenInput.value = ''; }
+    }
+  }
+  if (hlocCell) {
+    hlocCell.style.opacity = isEdge ? '0.35' : '1';
+    hlocCell.style.pointerEvents = isEdge ? 'none' : '';
+    if (isEdge) {
+      var locSel = hlocCell.querySelector('select');
+      if (locSel) locSel.value = 'none';
+      var extra = document.getElementById('handleLocExtra_' + n);
+      if (extra) extra.classList.remove('show');
+    }
+  }
+}
+
+/* 도어위치 변경 — 마이다 선택 시 보링 비활성화 */
+function onDirChange(n) {
+  var dirSel = document.getElementById('dirSelect_' + n);
+  var boringCell = document.getElementById('boringCell_' + n);
+  var isMaida = dirSel && dirSel.value === 'maida';
+
+  if (boringCell) {
+    boringCell.style.opacity = isMaida ? '0.35' : '1';
+    boringCell.style.pointerEvents = isMaida ? 'none' : '';
+    if (isMaida) {
+      /* 기존 보링 항목 모두 제거 */
+      var list = document.getElementById('boringList_' + n);
+      if (list) list.innerHTML = '';
+    }
+  }
 }
 
 /* 보링: 추가 버튼 클릭 시 위/아래 쌍 카드 생성 */
@@ -1807,8 +1855,9 @@ function buildQuoteFromOrder() {
 
     /* 도어 위치 */
     var dirEl = cells[6] ? cells[6].querySelector('select') : null;
-    var dirMap = { 'left': '좌경', 'right': '우경', 'none': '구분없음', '': '—' };
-    var dirVal = dirEl ? (dirMap[dirEl.value] || dirEl.value || '—') : '—';
+    var dirKey = dirEl ? dirEl.value : '';
+    var dirMap = { 'maida': '마이다', 'left': '좌경', 'right': '우경', 'none': '구분없음', '': '—' };
+    var dirVal = dirMap[dirKey] || dirKey || '—';
 
     /* 컬러 */
     var colorEl = row.querySelector('.color-select');
@@ -1863,9 +1912,11 @@ function buildQuoteFromOrder() {
     }
 
     /* 견적서 행 생성 — 단가 자동계산: 세로 × 가로 × 2 × 39 */
+    /* 마이다 선택 시 가로/세로 반전 (세로가 기준 폭이 됨) */
     /* 불소도장 선택 시 × 1.15 추가 적용 */
     var wNum = parseFloat(sizeW) || 0;
     var hNum = parseFloat(sizeH) || 0;
+    /* 단가 계산은 항상 세로×가로 기준 (마이다도 동일 공식) */
     var baseUnit = wNum && hNum ? (hNum * wNum * 2 * 39) : 0;
     var autoUnit = baseUnit ? Math.round(baseUnit * (finishKey === 'fluoro' ? 1.15 : 1) / 10) * 10 : 0;
     var qtyNum = parseFloat(qty) || 0;
@@ -1887,7 +1938,7 @@ function buildQuoteFromOrder() {
       '<td style="min-width:80px">' + hlocVal + '</td>' +
       '<td style="min-width:50px"><input type="number" class="calc-input calc-qty" value="' + qty + '" placeholder="기입" min="1" style="width:46px" oninput="calcRecalc(' + n + ')"></td>' +
       '<td style="min-width:80px"><input type="number" class="calc-input calc-unit" value="' + (autoUnit || '') + '" placeholder="자동" min="0" style="width:76px" ' +
-        'data-sizew="' + wNum + '" data-sizeh="' + hNum + '" data-finish="' + finishKey + '" oninput="calcRecalc(' + n + ')"></td>' +
+        'data-sizew="' + wNum + '" data-sizeh="' + hNum + '" data-finish="' + finishKey + '" data-dir="' + dirKey + '" oninput="calcRecalc(' + n + ')"></td>' +
       '<td class="calc-amount-cell" id="camt_' + n + '">' + (autoAmt > 0 ? '₩ ' + autoAmt.toLocaleString() : '—') + '</td>';
     tbody.appendChild(tr);
   }
