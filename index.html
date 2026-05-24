@@ -591,9 +591,10 @@
     animation: shake 0.35s ease;
   }
   .header-input-error {
-    border-color: #c0392b !important;
+    border: 2px solid #c0392b !important;
     background: #fff5f5 !important;
     animation: shake 0.35s ease;
+    border-radius: 6px;
   }
   @keyframes shake {
     0%,100% { transform: translateX(0); }
@@ -1737,22 +1738,25 @@ function submitOrder() {
 
   for (var i = 0; i < orderRows.length; i++) {
     var row = orderRows[i];
-    var rowNo = i + 1;
+    var rowId = row.id.replace('row_', ''); /* 실제 행 ID 사용 */
     var cells = row.querySelectorAll('td');
 
-    var sizeW = cells[2] ? cells[2].querySelector('input') : null;
-    var sizeH = cells[3] ? cells[3].querySelector('input') : null;
-    var qtyEl = row.querySelector('.qty-input');
-    var typeEl= document.getElementById('typeSelect_' + (i+1));
-    var dirEl = document.getElementById('dirSelect_' + (i+1));
+    var sizeW   = cells[2] ? cells[2].querySelector('input') : null;
+    var sizeH   = cells[3] ? cells[3].querySelector('input') : null;
+    var qtyEl   = row.querySelector('.qty-input');
+    var typeEl  = row.querySelector('.type-select');
+    var dirEl   = row.querySelector('.dir-select');
     var colorEl = row.querySelector('.color-select');
-    var finishEl= row.querySelectorAll('select');
-    var finishSel = finishEl[finishEl.length - 1];
+    var allSels = row.querySelectorAll('select');
+    var finishSel = allSels[allSels.length - 1];
 
     var rowHasAny = (sizeW && sizeW.value) || (sizeH && sizeH.value) || (qtyEl && qtyEl.value);
     if (!rowHasAny) continue; /* 완전히 빈 행은 건너뜀 */
 
     hasValidRow = true;
+    var rowNo = i + 1;
+    var isEdge  = typeEl  && typeEl.value  === 'edge';
+    var isMaida = dirEl   && dirEl.value   === 'maida';
 
     if (!sizeW || !sizeW.value) {
       markError(sizeW, 'input');
@@ -1782,10 +1786,54 @@ function submitOrder() {
       markError(finishSel, 'select');
       errors.push(rowNo + '행: 도장 형태 선택 필요');
     }
+
+    /* 손잡이 길이 — 엣지만이면 건너뜀 */
+    if (!isEdge) {
+      var hlenChecked = row.querySelector('input[name^="hlen_"]:checked');
+      if (!hlenChecked) {
+        /* 라디오 자체에 오류 표시 */
+        var hlenCell = row.querySelector('.handle-len-cell');
+        if (hlenCell) {
+          hlenCell.style.outline = '2px solid #c0392b';
+          hlenCell.style.borderRadius = '5px';
+        }
+        errors.push(rowNo + '행: 손잡이 길이 선택 필요');
+      }
+    }
+
+    /* 손잡이 위치 mm — 마이다+센터 기준이면 mm 불필요 */
+    var hlocSel = row.querySelector('.hloc-select');
+    if (hlocSel && hlocSel.value !== 'none' && !isEdge) {
+      var isCenterNoMm = isMaida && hlocSel.value === 'center';
+      if (!isCenterNoMm) {
+        var hlocInput = row.querySelector('.handle-loc-extra input');
+        if (!hlocInput || !hlocInput.value) {
+          markError(hlocInput, 'input');
+          errors.push(rowNo + '행: 손잡이 위치 mm 입력 필요');
+        }
+      }
+    }
   }
 
   if (!hasValidRow) {
     errors.push('발주 항목을 최소 1개 이상 입력해주세요');
+  }
+
+  /* ── 납품 정보 필수 체크 ── */
+  var delivAddr  = document.getElementById('deliveryAddress');
+  var delivPerson= document.getElementById('deliveryPerson');
+  var delivPhone = document.getElementById('deliveryPhone');
+  if (!delivAddr  || !delivAddr.value.trim()) {
+    markError(delivAddr, 'header');
+    errors.push('납품 장소를 입력해주세요');
+  }
+  if (!delivPerson || !delivPerson.value.trim()) {
+    markError(delivPerson, 'header');
+    errors.push('수령인을 입력해주세요');
+  }
+  if (!delivPhone  || !delivPhone.value.trim()) {
+    markError(delivPhone, 'header');
+    errors.push('납품 연락처를 입력해주세요');
   }
 
   /* ── 오류 있으면 멈춤 ── */
@@ -1871,6 +1919,12 @@ function clearErrors() {
   var els = document.querySelectorAll('.field-error, .field-error-select, .header-input-error');
   for (var i = 0; i < els.length; i++) {
     els[i].classList.remove('field-error', 'field-error-select', 'header-input-error');
+  }
+  /* 손잡이 길이 셀 outline 초기화 */
+  var hlenCells = document.querySelectorAll('.handle-len-cell');
+  for (var j = 0; j < hlenCells.length; j++) {
+    hlenCells[j].style.outline = '';
+    hlenCells[j].style.borderRadius = '';
   }
   document.getElementById('errorSummary').classList.remove('show');
 }
