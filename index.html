@@ -577,8 +577,45 @@
   }
   .btn-submit:hover { background: #0f2a6e; }
 
-  /* 색상 select 옵션 프리뷰 (JS로 처리) */
-  select.color-select { min-width: 150px; }
+  /* ── 유효성 검사 오류 표시 ── */
+  .field-error {
+    border: 2px solid #c0392b !important;
+    background: #fff5f5 !important;
+    border-radius: 5px;
+    animation: shake 0.35s ease;
+  }
+  .field-error-select {
+    border: 2px solid #c0392b !important;
+    background: #fff5f5 !important;
+    border-radius: 5px;
+    animation: shake 0.35s ease;
+  }
+  .header-input-error {
+    border-color: #c0392b !important;
+    background: #fff5f5 !important;
+    animation: shake 0.35s ease;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-5px); }
+    40%      { transform: translateX(5px); }
+    60%      { transform: translateX(-4px); }
+    80%      { transform: translateX(4px); }
+  }
+  .error-summary {
+    background: #fff0f0;
+    border: 1.5px solid #c0392b;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin: 8px 28px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #c0392b;
+    display: none;
+  }
+  .error-summary.show { display: block; }
+  .error-summary ul { margin: 4px 0 0 16px; font-weight: 400; }
+  .error-summary li { line-height: 1.8; }
 
   /* 인쇄 모드 구분용 */
   body.printing-order #calcPage,
@@ -721,6 +758,12 @@
       <span class="drawing-hint">JPG · PNG · GIF 등 이미지 파일 (여러 장 가능)</span>
     </div>
     <div class="drawing-preview" id="drawingPreview"></div>
+  </div>
+
+  <!-- 유효성 오류 요약 -->
+  <div class="error-summary" id="errorSummary">
+    ⚠️ 아래 항목을 확인해주세요:
+    <ul id="errorList"></ul>
   </div>
 
   <!-- 액션 -->
@@ -1453,13 +1496,13 @@ function buildRowHTML(n) {
     /* 10. 손잡이 위치 */
     '<td class="handle-loc-cell" id="hlocCell_' + n + '">' +
       '<div class="handle-loc-inner">' +
-        '<select class="cell-select hloc-select" id="hlocSelect_' + n + '" onchange="toggleHandleLoc(this,' + n + ')" style="min-width:130px">' +
+        '<select class="cell-select hloc-select" id="hlocSelect_' + n + '" onchange="toggleHandleLoc(this,' + n + ')" style="min-width:160px">' +
           '<option value="none">없음</option>' +
-          '<option value="custom">맨 하단에서부터</option>' +
+          '<option value="bottom">맨 하단에서부터 (손잡이 하단 기준)</option>' +
         '</select>' +
         '<div class="handle-loc-extra" id="handleLocExtra_' + n + '">' +
-          '<input type="number" class="cell-input" placeholder="기입" style="width:65px">' +
-          '<span style="font-size:10px;color:#8a96b0">mm</span>' +
+          '<input type="number" class="cell-input" placeholder="기입" id="hlocInput_' + n + '" style="width:65px">' +
+          '<span class="hloc-unit" id="hlocUnit_' + n + '" style="font-size:10px;color:#8a96b0">mm</span>' +
         '</div>' +
       '</div>' +
     '</td>' +
@@ -1505,29 +1548,39 @@ function onTypeChange(n) {
   }
 }
 
-/* 도어위치 변경 — 마이다 선택 시 보링 비활성화 + 손잡이위치 라벨 변경 */
+/* 도어위치 변경 — 마이다 선택 시 보링 비활성화 + 손잡이위치 옵션 교체 */
 function onDirChange(n) {
-  var dirSel    = document.getElementById('dirSelect_' + n);
+  var dirSel     = document.getElementById('dirSelect_' + n);
   var boringCell = document.getElementById('boringCell_' + n);
-  var hlocSel   = document.getElementById('hlocSelect_' + n);
-  var isMaida   = dirSel && dirSel.value === 'maida';
+  var hlocSel    = document.getElementById('hlocSelect_' + n);
+  var extra      = document.getElementById('handleLocExtra_' + n);
+  var isMaida    = dirSel && dirSel.value === 'maida';
 
   /* 보링 비활성화 */
   if (boringCell) {
-    boringCell.style.opacity = isMaida ? '0.35' : '1';
-    boringCell.style.pointerEvents = isMaida ? 'none' : '';
+    boringCell.style.opacity      = isMaida ? '0.35' : '1';
+    boringCell.style.pointerEvents= isMaida ? 'none' : '';
     if (isMaida) {
       var list = document.getElementById('boringList_' + n);
       if (list) list.innerHTML = '';
     }
   }
 
-  /* 손잡이 위치 옵션 라벨 변경 */
+  /* 손잡이 위치 옵션 교체 */
   if (hlocSel) {
-    var customOpt = hlocSel.querySelector('option[value="custom"]');
-    if (customOpt) {
-      customOpt.textContent = isMaida ? '맨 왼쪽에서부터' : '맨 하단에서부터';
-    }
+    var prev = hlocSel.value;
+    hlocSel.innerHTML = isMaida
+      ? '<option value="none">없음</option>' +
+        '<option value="center">도어 가로 바 센터 기준</option>' +
+        '<option value="left">맨 왼쪽에서부터</option>'
+      : '<option value="none">없음</option>' +
+        '<option value="bottom">맨 하단에서부터 (손잡이 하단 기준)</option>';
+
+    /* 선택값 초기화 + 입력란 숨김 */
+    hlocSel.value = 'none';
+    if (extra) extra.classList.remove('show');
+    var inp = document.getElementById('hlocInput_' + n);
+    if (inp) inp.value = '';
   }
 }
 
@@ -1568,10 +1621,13 @@ function toggleHandleLen(radio, n) {
 
 function toggleHandleLoc(sel, n) {
   var extra = document.getElementById('handleLocExtra_' + n);
-  if (sel.value === 'custom') {
+  /* none 이외 모든 선택 시 mm 입력란 표시 */
+  if (sel.value !== 'none') {
     extra.classList.add('show');
   } else {
     extra.classList.remove('show');
+    var inp = document.getElementById('hlocInput_' + n);
+    if (inp) inp.value = '';
   }
 }
 
@@ -1658,22 +1714,97 @@ function closePaletteBtn() {
   document.getElementById('paletteModal').classList.remove('show');
 }
 function submitOrder() {
-  // 업체명 필수 확인
+  /* 이전 오류 표시 초기화 */
+  clearErrors();
+
+  var errors = [];
+
+  /* ── 헤더 필수 항목 ── */
   var company = document.getElementById('customerName').value.trim();
   if (!company) {
-    alert('업체명을 입력해주세요.');
-    document.getElementById('customerName').focus();
+    markError(document.getElementById('customerName'), 'header');
+    errors.push('업체명을 입력해주세요');
+  }
+  var phone = document.getElementById('customerPhone').value.trim();
+  if (!phone) {
+    markError(document.getElementById('customerPhone'), 'header');
+    errors.push('연락처를 입력해주세요');
+  }
+
+  /* ── 행별 필수 항목 ── */
+  var orderRows = document.querySelectorAll('#orderBody tr');
+  var hasValidRow = false;
+
+  for (var i = 0; i < orderRows.length; i++) {
+    var row = orderRows[i];
+    var rowNo = i + 1;
+    var cells = row.querySelectorAll('td');
+
+    var sizeW = cells[2] ? cells[2].querySelector('input') : null;
+    var sizeH = cells[3] ? cells[3].querySelector('input') : null;
+    var qtyEl = row.querySelector('.qty-input');
+    var typeEl= document.getElementById('typeSelect_' + (i+1));
+    var dirEl = document.getElementById('dirSelect_' + (i+1));
+    var colorEl = row.querySelector('.color-select');
+    var finishEl= row.querySelectorAll('select');
+    var finishSel = finishEl[finishEl.length - 1];
+
+    var rowHasAny = (sizeW && sizeW.value) || (sizeH && sizeH.value) || (qtyEl && qtyEl.value);
+    if (!rowHasAny) continue; /* 완전히 빈 행은 건너뜀 */
+
+    hasValidRow = true;
+
+    if (!sizeW || !sizeW.value) {
+      markError(sizeW, 'input');
+      errors.push(rowNo + '행: 완성 사이즈 (가로) 입력 필요');
+    }
+    if (!sizeH || !sizeH.value) {
+      markError(sizeH, 'input');
+      errors.push(rowNo + '행: 완성 사이즈 (세로) 입력 필요');
+    }
+    if (!qtyEl || !qtyEl.value) {
+      markError(qtyEl, 'input');
+      errors.push(rowNo + '행: 수량 입력 필요');
+    }
+    if (!typeEl || !typeEl.value) {
+      markError(typeEl, 'select');
+      errors.push(rowNo + '행: 타입 선택 필요');
+    }
+    if (!dirEl || !dirEl.value) {
+      markError(dirEl, 'select');
+      errors.push(rowNo + '행: 도어 위치 선택 필요');
+    }
+    if (!colorEl || !colorEl.value) {
+      markError(colorEl, 'select');
+      errors.push(rowNo + '행: 컬러 선택 필요');
+    }
+    if (!finishSel || !finishSel.value) {
+      markError(finishSel, 'select');
+      errors.push(rowNo + '행: 도장 형태 선택 필요');
+    }
+  }
+
+  if (!hasValidRow) {
+    errors.push('발주 항목을 최소 1개 이상 입력해주세요');
+  }
+
+  /* ── 오류 있으면 멈춤 ── */
+  if (errors.length > 0) {
+    var ul = document.getElementById('errorList');
+    ul.innerHTML = '';
+    for (var e = 0; e < errors.length; e++) {
+      var li = document.createElement('li');
+      li.textContent = errors[e];
+      ul.appendChild(li);
+    }
+    document.getElementById('errorSummary').classList.add('show');
+    document.getElementById('errorSummary').scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
-  // 행 데이터 수집
-  var rows = collectOrderRows();
-  if (rows.length === 0) {
-    alert('발주 항목을 최소 1개 이상 입력해주세요.');
-    return;
-  }
+  /* ── 통과 시 제출 ── */
+  document.getElementById('errorSummary').classList.remove('show');
 
-  // 제출 모달 열기
   document.getElementById('submitIcon').textContent = '⏳';
   document.getElementById('submitTitle').textContent = '제출 중...';
   document.getElementById('submitMsg').textContent = '잠시 기다려 주세요';
@@ -1681,17 +1812,16 @@ function submitOrder() {
   document.getElementById('submitCloseBtn').style.display = 'none';
   document.getElementById('submitModal').classList.add('show');
 
-  // 데이터 패키지
+  var rows = collectOrderRows();
   var payload = {
     action    : 'submit',
     company   : company,
     person    : document.getElementById('customerPerson').value.trim(),
-    phone     : document.getElementById('customerPhone').value.trim(),
+    phone     : phone,
     quoteDate : document.getElementById('orderDate').value,
     rows      : rows
   };
 
-  // Apps Script로 전송 (Image 픽셀 방식 대신 fetch 사용 — GitHub Pages는 CORS 무관)
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     body: JSON.stringify(payload)
@@ -1710,12 +1840,39 @@ function submitOrder() {
     }
     document.getElementById('submitCloseBtn').style.display = 'inline-block';
   })
-  .catch(function(err) {
+  .catch(function() {
     document.getElementById('submitIcon').textContent = '❌';
     document.getElementById('submitTitle').textContent = '오류 발생';
     document.getElementById('submitMsg').textContent = 'Apps Script URL을 확인해주세요.';
     document.getElementById('submitCloseBtn').style.display = 'inline-block';
   });
+}
+
+/* 오류 표시 함수 */
+function markError(el, type) {
+  if (!el) return;
+  if (type === 'header') el.classList.add('header-input-error');
+  else if (type === 'select') el.classList.add('field-error-select');
+  else el.classList.add('field-error');
+
+  /* 입력 시 오류 표시 자동 제거 */
+  var evtType = (type === 'select') ? 'change' : 'input';
+  el.addEventListener(evtType, function() {
+    el.classList.remove('field-error', 'field-error-select', 'header-input-error');
+    /* 모든 오류가 사라지면 요약도 숨김 */
+    if (!document.querySelector('.field-error, .field-error-select, .header-input-error')) {
+      document.getElementById('errorSummary').classList.remove('show');
+    }
+  }, { once: true });
+}
+
+/* 오류 초기화 */
+function clearErrors() {
+  var els = document.querySelectorAll('.field-error, .field-error-select, .header-input-error');
+  for (var i = 0; i < els.length; i++) {
+    els[i].classList.remove('field-error', 'field-error-select', 'header-input-error');
+  }
+  document.getElementById('errorSummary').classList.remove('show');
 }
 
 /* 발주서 행 데이터 수집 */
@@ -1760,7 +1917,14 @@ function collectOrderRows() {
     // 손잡이 위치
     var hlocSel = selects[2] ? selects[2].value : '';
     var hlocExtra = row.querySelector('.handle-loc-extra input');
-    var hlocVal = hlocSel === 'custom' ? '하단에서 ' + (hlocExtra ? hlocExtra.value : '') + 'mm' : (hlocSel === 'none' ? '없음' : hlocSel);
+    var hlocMm = hlocExtra ? (hlocExtra.value || '') : '';
+    var hlocLabelMap = {
+      'none':   '없음',
+      'bottom': '하단에서 ' + hlocMm + 'mm (손잡이 하단 기준)',
+      'center': '도어 가로 바 센터 기준' + (hlocMm ? ' ' + hlocMm + 'mm' : ''),
+      'left':   '왼쪽에서 ' + hlocMm + 'mm'
+    };
+    var hlocVal = hlocLabelMap[hlocSel] || (hlocSel || '없음');
 
     // 컬러
     var colorSel = row.querySelector('.color-select');
@@ -1985,14 +2149,14 @@ function buildQuoteFromOrder() {
     /* 손잡이 위치 */
     var hlocSel2  = row.querySelectorAll('select')[2];
     var hlocExtra = row.querySelector('.handle-loc-extra input');
+    var hlocMm2   = hlocExtra && hlocExtra.value ? hlocExtra.value : '';
     var hlocVal   = '—';
     if (hlocSel2) {
-      if (hlocSel2.value === 'custom') {
-        var locLabel = (dirKey === 'maida') ? '왼쪽에서 ' : '하단에서 ';
-        hlocVal = locLabel + (hlocExtra && hlocExtra.value ? hlocExtra.value : '?') + 'mm';
-      } else if (hlocSel2.value === 'none') {
-        hlocVal = '없음';
-      }
+      var hv = hlocSel2.value;
+      if (hv === 'none')   hlocVal = '없음';
+      else if (hv === 'bottom') hlocVal = '하단에서 ' + (hlocMm2 || '?') + 'mm (손잡이 하단 기준)';
+      else if (hv === 'center') hlocVal = '가로 바 센터 기준' + (hlocMm2 ? ' ' + hlocMm2 + 'mm' : '');
+      else if (hv === 'left')   hlocVal = '왼쪽에서 ' + (hlocMm2 || '?') + 'mm';
     }
 
     /* 견적서 행 생성 — 단가 자동계산: 세로 × 가로 × 2 × 39 */
