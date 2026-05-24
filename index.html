@@ -621,6 +621,11 @@
     .quote-etc-box { padding: 8px 14px !important; }
     .quote-etc-label { font-size: 10px !important; }
     .quote-etc-area { font-size: 10px !important; min-height: 40px !important; border: 1px solid #ccc !important; }
+    .quote-supplier-box { border: 1.5px solid #333 !important; }
+    .qs-title { font-size: 10px !important; padding: 5px !important; }
+    .qs-label { font-size: 9px !important; min-width: 48px !important; }
+    .qs-input { font-size: 10px !important; border-bottom: 1px solid #ccc !important; }
+    .qs-row { padding: 5px 10px !important; }
   }
 </style>
 </head>
@@ -799,15 +804,15 @@
       <div class="quote-info-left">
         <div class="quote-info-grid">
           <div class="qi-row">
-            <span class="qi-label">업체명</span>
+            <span class="qi-label">업&nbsp;체&nbsp;명</span>
             <input type="text" class="qi-input" id="quoteCompany" placeholder="업체명">
           </div>
           <div class="qi-row">
-            <span class="qi-label">성&nbsp;&nbsp;&nbsp;명</span>
+            <span class="qi-label">성&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;명</span>
             <input type="text" class="qi-input" id="quotePerson" placeholder="담당자 성명">
           </div>
           <div class="qi-row">
-            <span class="qi-label">연락처</span>
+            <span class="qi-label">연&nbsp;락&nbsp;처</span>
             <input type="text" class="qi-input" id="quotePhone" placeholder="010-0000-0000">
           </div>
         </div>
@@ -881,10 +886,41 @@
       </div>
     </div>
 
-    <!-- 기타 공란 -->
+    <!-- 기타 (요청사항 자동 연동) -->
     <div class="quote-etc-box">
       <div class="quote-etc-label">기타</div>
-      <textarea class="quote-etc-area" id="qEtcText" placeholder="기타 사항을 자유롭게 입력하세요"></textarea>
+      <textarea class="quote-etc-area" id="qEtcText" placeholder="기타 요청사항"></textarea>
+    </div>
+
+    <!-- 공급자 작성란 -->
+    <div class="quote-supplier-box">
+      <div class="qs-title">공&nbsp;&nbsp;급&nbsp;&nbsp;자</div>
+      <div class="qs-grid">
+        <div class="qs-row">
+          <span class="qs-label">상&nbsp;&nbsp;&nbsp;호</span>
+          <input type="text" class="qs-input" value="와이엠" placeholder="상호명">
+        </div>
+        <div class="qs-row">
+          <span class="qs-label">대표자</span>
+          <input type="text" class="qs-input" placeholder="대표자명">
+        </div>
+        <div class="qs-row">
+          <span class="qs-label">사업자번호</span>
+          <input type="text" class="qs-input" placeholder="000-00-00000">
+        </div>
+        <div class="qs-row">
+          <span class="qs-label">주&nbsp;&nbsp;&nbsp;소</span>
+          <input type="text" class="qs-input" placeholder="사업장 주소">
+        </div>
+        <div class="qs-row">
+          <span class="qs-label">연&nbsp;락&nbsp;처</span>
+          <input type="text" class="qs-input" value="010-7633-2220" placeholder="연락처">
+        </div>
+        <div class="qs-row">
+          <span class="qs-label">담&nbsp;&nbsp;&nbsp;당</span>
+          <input type="text" class="qs-input" value="이창열 과장" placeholder="담당자">
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1284,6 +1320,38 @@
 }
 .quote-etc-area:focus { border-color: var(--accent); background: #f0f4ff; }
 .quote-etc-area::placeholder { color: #c0c8dc; }
+
+/* ── 공급자 작성란 ── */
+.quote-supplier-box {
+  background: #fff;
+  border: 1.5px solid var(--steel);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.qs-title {
+  background: var(--steel); color: #fff;
+  font-size: 12px; font-weight: 700;
+  padding: 8px 16px; letter-spacing: 4px; text-align: center;
+}
+.qs-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.qs-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+.qs-row:nth-child(even) { border-right: none; }
+.qs-row:nth-last-child(-n+2) { border-bottom: none; }
+.qs-label { font-size: 11px; font-weight: 700; color: var(--muted); white-space: nowrap; min-width: 58px; }
+.qs-input {
+  flex: 1; border: none; border-bottom: 1px solid var(--border);
+  padding: 3px 4px; font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; font-weight: 600; color: var(--steel);
+  background: transparent; outline: none; transition: border-color 0.2s;
+}
+.qs-input:focus { border-color: var(--accent); }
+.qs-input::placeholder { color: #c0c8dc; font-weight: 400; }
 @media print {
   @page { size: A4 landscape; margin: 8mm; }
   body > * { display: none !important; }
@@ -1385,7 +1453,7 @@ function buildRowHTML(n) {
     /* 10. 손잡이 위치 */
     '<td class="handle-loc-cell" id="hlocCell_' + n + '">' +
       '<div class="handle-loc-inner">' +
-        '<select class="cell-select" onchange="toggleHandleLoc(this,' + n + ')" style="min-width:110px">' +
+        '<select class="cell-select hloc-select" id="hlocSelect_' + n + '" onchange="toggleHandleLoc(this,' + n + ')" style="min-width:130px">' +
           '<option value="none">없음</option>' +
           '<option value="custom">맨 하단에서부터</option>' +
         '</select>' +
@@ -1437,19 +1505,28 @@ function onTypeChange(n) {
   }
 }
 
-/* 도어위치 변경 — 마이다 선택 시 보링 비활성화 */
+/* 도어위치 변경 — 마이다 선택 시 보링 비활성화 + 손잡이위치 라벨 변경 */
 function onDirChange(n) {
-  var dirSel = document.getElementById('dirSelect_' + n);
+  var dirSel    = document.getElementById('dirSelect_' + n);
   var boringCell = document.getElementById('boringCell_' + n);
-  var isMaida = dirSel && dirSel.value === 'maida';
+  var hlocSel   = document.getElementById('hlocSelect_' + n);
+  var isMaida   = dirSel && dirSel.value === 'maida';
 
+  /* 보링 비활성화 */
   if (boringCell) {
     boringCell.style.opacity = isMaida ? '0.35' : '1';
     boringCell.style.pointerEvents = isMaida ? 'none' : '';
     if (isMaida) {
-      /* 기존 보링 항목 모두 제거 */
       var list = document.getElementById('boringList_' + n);
       if (list) list.innerHTML = '';
+    }
+  }
+
+  /* 손잡이 위치 옵션 라벨 변경 */
+  if (hlocSel) {
+    var customOpt = hlocSel.querySelector('option[value="custom"]');
+    if (customOpt) {
+      customOpt.textContent = isMaida ? '맨 왼쪽에서부터' : '맨 하단에서부터';
     }
   }
 }
@@ -1815,11 +1892,15 @@ function buildQuoteFromOrder() {
   var addr   = document.getElementById('deliveryAddress') ? document.getElementById('deliveryAddress').value : '';
   var dPerson= document.getElementById('deliveryPerson')  ? document.getElementById('deliveryPerson').value  : '';
   var dPhone = document.getElementById('deliveryPhone')   ? document.getElementById('deliveryPhone').value   : '';
-  var dDate  = document.getElementById('deliveryDate')    ? document.getElementById('deliveryDate').value    : '';
   document.getElementById('qDeliveryAddress').textContent = addr    || '—';
   document.getElementById('qDeliveryPerson').textContent  = dPerson || '—';
   document.getElementById('qDeliveryPhone').textContent   = dPhone  || '—';
-  document.getElementById('qDeliveryDate').value          = dDate   || '';
+  document.getElementById('qDeliveryDate').value          = '';
+
+  /* 기타(요청사항) 자동 연동 */
+  var etcText = document.getElementById('orderEtcText') ? document.getElementById('orderEtcText').value : '';
+  var qEtc = document.getElementById('qEtcText');
+  if (qEtc) qEtc.value = etcText || '';
 
   /* 발주서 행 읽기 */
   var tbody = document.getElementById('calcBody');
@@ -1902,13 +1983,16 @@ function buildQuoteFromOrder() {
     }
 
     /* 손잡이 위치 */
-    var hlocSel = row.querySelectorAll('select')[2];
+    var hlocSel2  = row.querySelectorAll('select')[2];
     var hlocExtra = row.querySelector('.handle-loc-extra input');
-    var hlocVal = '—';
-    if (hlocSel) {
-      hlocVal = hlocSel.value === 'custom'
-        ? '하단에서 ' + (hlocExtra && hlocExtra.value ? hlocExtra.value : '?') + 'mm'
-        : (hlocSel.value === 'none' ? '없음' : '—');
+    var hlocVal   = '—';
+    if (hlocSel2) {
+      if (hlocSel2.value === 'custom') {
+        var locLabel = (dirKey === 'maida') ? '왼쪽에서 ' : '하단에서 ';
+        hlocVal = locLabel + (hlocExtra && hlocExtra.value ? hlocExtra.value : '?') + 'mm';
+      } else if (hlocSel2.value === 'none') {
+        hlocVal = '없음';
+      }
     }
 
     /* 견적서 행 생성 — 단가 자동계산: 세로 × 가로 × 2 × 39 */
@@ -1917,7 +2001,7 @@ function buildQuoteFromOrder() {
     var wNum = parseFloat(sizeW) || 0;
     var hNum = parseFloat(sizeH) || 0;
     /* 단가 계산은 항상 세로×가로 기준 (마이다도 동일 공식) */
-    var baseUnit = wNum && hNum ? (hNum * wNum * 2 * 39) : 0;
+    var baseUnit = wNum && hNum ? ((wNum + hNum) * 2 * 39) : 0;
     var autoUnit = baseUnit ? Math.round(baseUnit * (finishKey === 'fluoro' ? 1.15 : 1) / 10) * 10 : 0;
     var qtyNum = parseFloat(qty) || 0;
     var autoAmt = autoUnit * qtyNum;
@@ -1943,28 +2027,41 @@ function buildQuoteFromOrder() {
     tbody.appendChild(tr);
   }
 
+  /* 초기 로드 시 모든 행 단가·금액 즉시 계산 */
+  for (var k = 1; k <= calcRowCount; k++) {
+    calcRecalc(k);
+  }
+
   calcTotalRecalc();
 }
 
 function calcRecalc(n) {
   var row = document.getElementById('crow_' + n);
   if (!row) return;
-  var qty    = parseFloat(row.querySelector('.calc-qty').value) || 0;
-  var unitEl = row.querySelector('.calc-unit');
-  var unit   = parseFloat(unitEl.value) || 0;
 
-  /* 단가가 비어있으면 사이즈 + 도장형태 기반 자동계산 */
-  if (!unit) {
-    var w       = parseFloat(unitEl.getAttribute('data-sizew')) || 0;
-    var h       = parseFloat(unitEl.getAttribute('data-sizeh')) || 0;
-    var finish  = unitEl.getAttribute('data-finish') || '';
-    var base    = w && h ? (h * w * 2 * 39) : 0;
+  var qtyEl  = row.querySelector('.calc-qty');
+  var unitEl = row.querySelector('.calc-unit');
+  var qty    = parseFloat(qtyEl  ? qtyEl.value  : 0) || 0;
+  var unit   = parseFloat(unitEl ? unitEl.value : 0) || 0;
+
+  /* 단가가 비어있을 때만 자동계산으로 채워줌
+     — 직접 입력한 경우에는 그 값을 그대로 사용 */
+  if (!unit && unitEl) {
+    var w      = parseFloat(unitEl.getAttribute('data-sizew'))  || 0;
+    var h      = parseFloat(unitEl.getAttribute('data-sizeh'))  || 0;
+    var finish = unitEl.getAttribute('data-finish') || '';
+    var base   = (w && h) ? ((w + h) * 2 * 39) : 0;
     unit = base ? Math.round(base * (finish === 'fluoro' ? 1.15 : 1) / 10) * 10 : 0;
-    if (unit) unitEl.value = unit;
+    if (unit && unitEl) unitEl.value = unit;
   }
 
-  var amt = qty * unit;
-  document.getElementById('camt_' + n).textContent = amt > 0 ? '₩ ' + amt.toLocaleString() : '—';
+  /* 금액 = 단가 × 수량 */
+  var amtCell = document.getElementById('camt_' + n);
+  if (amtCell) {
+    var amt = unit * qty;
+    amtCell.textContent = amt > 0 ? '₩ ' + amt.toLocaleString() : '—';
+  }
+
   calcTotalRecalc();
 }
 
