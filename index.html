@@ -1460,14 +1460,14 @@ function buildRowHTML(n) {
     '<td class="td-size"><input type="number" class="cell-input" placeholder="기입" min="0" style="width:60px"></td>' +
     /* 5. 수량 */
     '<td><input type="number" class="cell-input qty-input" placeholder="기입" min="1" style="width:50px" onchange="recalc()" oninput="recalc()"></td>' +
-    /* 6. 타입 */
-    '<td><select class="cell-select" style="min-width:100px">' +
+    /* 6. 타입 — 엣지만 선택 시 손잡이 숨김 */
+    '<td><select class="cell-select type-select" style="min-width:100px" onchange="onTypeChange(this)">' +
       '<option value="">선택</option>' +
       '<option value="edge">엣지만</option>' +
       '<option value="handle">손잡이 도어</option>' +
     '</select></td>' +
     /* 7. 도어 위치 — 마이다 선택 시 보링 비활성화 */
-    '<td><select class="cell-select dir-select" id="dirSelect_' + n + '" style="min-width:80px" onchange="onDirChange(' + n + ')">' +
+    '<td><select class="cell-select dir-select" style="min-width:80px" onchange="onDirChange(this)">'  +
       '<option value="">선택</option>' +
       '<option value="maida">마이다</option>' +
       '<option value="left">좌경</option>' +
@@ -1521,84 +1521,73 @@ function buildRowHTML(n) {
     '<td><button type="button" class="btn-del" onclick="delRow(' + n + ')">✕</button></td>';
 }
 
-/* 타입 변경 — 엣지만 선택 시 손잡이 길이/위치 칸 숨김 */
-function onTypeChange(n) {
-  var typeSel  = document.getElementById('typeSelect_' + n);
-  var hlenCell = document.getElementById('hlenCell_' + n);
-  var hlocCell = document.getElementById('hlocCell_' + n);
-  var isEdge   = typeSel && typeSel.value === 'edge';
+/* 타입 변경 — this = select 요소, 엣지만 선택 시 손잡이 숨김 */
+function onTypeChange(sel) {
+  var row      = sel.closest('tr');
+  if (!row) return;
+  var isEdge   = sel.value === 'edge';
+  var hlenCell = row.querySelector('.handle-len-cell');
+  var hlocCell = row.querySelector('.handle-loc-cell');
 
   if (hlenCell) {
+    hlenCell.style.visibility   = isEdge ? 'hidden' : '';
+    hlenCell.style.opacity      = isEdge ? '0'      : '';
+    hlenCell.style.pointerEvents= isEdge ? 'none'   : '';
+    hlenCell.style.outline      = '';
     if (isEdge) {
-      hlenCell.style.visibility = 'hidden';
-      hlenCell.style.opacity    = '0';
-      hlenCell.style.pointerEvents = 'none';
-      /* 선택 초기화 */
       var radios = hlenCell.querySelectorAll('input[type="radio"]');
       for (var i = 0; i < radios.length; i++) radios[i].checked = false;
-      var hlenInput = document.getElementById('hlenInput_' + n);
-      if (hlenInput) { hlenInput.disabled = true; hlenInput.value = ''; }
-      hlenCell.style.outline = '';
-    } else {
-      hlenCell.style.visibility = '';
-      hlenCell.style.opacity    = '';
-      hlenCell.style.pointerEvents = '';
+      var hlenInp = hlenCell.querySelector('.handle-len-custom input');
+      if (hlenInp) { hlenInp.disabled = true; hlenInp.value = ''; }
     }
   }
 
   if (hlocCell) {
+    hlocCell.style.visibility   = isEdge ? 'hidden' : '';
+    hlocCell.style.opacity      = isEdge ? '0'      : '';
+    hlocCell.style.pointerEvents= isEdge ? 'none'   : '';
     if (isEdge) {
-      hlocCell.style.visibility = 'hidden';
-      hlocCell.style.opacity    = '0';
-      hlocCell.style.pointerEvents = 'none';
-      /* 선택 초기화 */
       var locSel = hlocCell.querySelector('select');
       if (locSel) locSel.value = 'none';
-      var extra = document.getElementById('handleLocExtra_' + n);
+      var extra = hlocCell.querySelector('.handle-loc-extra');
       if (extra) extra.classList.remove('show');
-      var locInput = document.getElementById('hlocInput_' + n);
-      if (locInput) locInput.value = '';
-    } else {
-      hlocCell.style.visibility = '';
-      hlocCell.style.opacity    = '';
-      hlocCell.style.pointerEvents = '';
+      var locInp = hlocCell.querySelector('.handle-loc-extra input');
+      if (locInp) locInp.value = '';
     }
   }
 }
 
 /* 도어위치 변경 — 마이다 선택 시 보링 비활성화 + 손잡이위치 옵션 교체 */
-function onDirChange(n) {
-  var dirSel     = document.getElementById('dirSelect_' + n);
-  var boringCell = document.getElementById('boringCell_' + n);
-  var hlocSel    = document.getElementById('hlocSelect_' + n);
-  var extra      = document.getElementById('handleLocExtra_' + n);
-  var isMaida    = dirSel && dirSel.value === 'maida';
+function onDirChange(sel) {
+  var row       = sel.closest('tr');
+  if (!row) return;
+  var isMaida   = sel.value === 'maida';
+  var boringCell= row.querySelector('.boring-cell');
+  var hlocSel   = row.querySelector('.hloc-select');
+  var extra     = row.querySelector('.handle-loc-extra');
 
   /* 보링 비활성화 */
   if (boringCell) {
     boringCell.style.opacity      = isMaida ? '0.35' : '1';
     boringCell.style.pointerEvents= isMaida ? 'none' : '';
     if (isMaida) {
-      var list = document.getElementById('boringList_' + n);
+      var list = boringCell.querySelector('.boring-list');
       if (list) list.innerHTML = '';
     }
   }
 
   /* 손잡이 위치 옵션 교체 */
   if (hlocSel) {
-    var prev = hlocSel.value;
     hlocSel.innerHTML = isMaida
       ? '<option value="none">없음</option>' +
         '<option value="center">도어 가로 바 센터 기준</option>' +
         '<option value="left">맨 왼쪽에서부터</option>'
       : '<option value="none">없음</option>' +
         '<option value="bottom">맨 하단에서부터 (손잡이 하단 기준)</option>';
-
-    /* 선택값 초기화 + 입력란 숨김 */
     hlocSel.value = 'none';
     if (extra) extra.classList.remove('show');
-    var inp = document.getElementById('hlocInput_' + n);
-    if (inp) inp.value = '';
+    var locInp = extra ? extra.querySelector('input') : null;
+    if (locInp) locInp.value = '';
   }
 }
 
