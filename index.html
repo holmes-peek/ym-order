@@ -268,7 +268,9 @@
   .handle-loc-extra.show { display: flex; }
   .handle-loc-extra input { width: 70px; font-size: 11px; }
 
-  /* 손잡이 길이 체크박스 셀 */
+  .handle-len-cell, .handle-loc-cell {
+    transition: opacity 0.2s, visibility 0.2s;
+  }
   .handle-len-cell { min-width: 150px; text-align: left; padding: 5px 7px; }
   .handle-len-inner { display: flex; flex-direction: column; gap: 5px; }
   .handle-len-option { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text); cursor: pointer; }
@@ -1510,7 +1512,7 @@ function buildRowHTML(n) {
     /* 11. 컬러 */
     '<td><select class="cell-select color-select">' + colorOpts + '</select></td>' +
     /* 12. 도장 형태 */
-    '<td><select class="cell-select" style="min-width:130px">' +
+    '<td><select class="cell-select finish-select" style="min-width:130px">' +
       '<option value="">선택</option>' +
       '<option value="anodize">아노다이징 (8-9일)</option>' +
       '<option value="fluoro">불소도장 (납기 14일)</option>' +
@@ -1519,32 +1521,47 @@ function buildRowHTML(n) {
     '<td><button type="button" class="btn-del" onclick="delRow(' + n + ')">✕</button></td>';
 }
 
-/* 타입 변경 — 엣지만 선택 시 손잡이 길이/위치 비활성화 */
+/* 타입 변경 — 엣지만 선택 시 손잡이 길이/위치 칸 숨김 */
 function onTypeChange(n) {
-  var typeSel = document.getElementById('typeSelect_' + n);
+  var typeSel  = document.getElementById('typeSelect_' + n);
   var hlenCell = document.getElementById('hlenCell_' + n);
   var hlocCell = document.getElementById('hlocCell_' + n);
-  var isEdge = typeSel && typeSel.value === 'edge';
+  var isEdge   = typeSel && typeSel.value === 'edge';
 
   if (hlenCell) {
-    hlenCell.style.opacity = isEdge ? '0.35' : '1';
-    hlenCell.style.pointerEvents = isEdge ? 'none' : '';
-    /* 라디오 초기화 */
     if (isEdge) {
+      hlenCell.style.visibility = 'hidden';
+      hlenCell.style.opacity    = '0';
+      hlenCell.style.pointerEvents = 'none';
+      /* 선택 초기화 */
       var radios = hlenCell.querySelectorAll('input[type="radio"]');
       for (var i = 0; i < radios.length; i++) radios[i].checked = false;
       var hlenInput = document.getElementById('hlenInput_' + n);
       if (hlenInput) { hlenInput.disabled = true; hlenInput.value = ''; }
+      hlenCell.style.outline = '';
+    } else {
+      hlenCell.style.visibility = '';
+      hlenCell.style.opacity    = '';
+      hlenCell.style.pointerEvents = '';
     }
   }
+
   if (hlocCell) {
-    hlocCell.style.opacity = isEdge ? '0.35' : '1';
-    hlocCell.style.pointerEvents = isEdge ? 'none' : '';
     if (isEdge) {
+      hlocCell.style.visibility = 'hidden';
+      hlocCell.style.opacity    = '0';
+      hlocCell.style.pointerEvents = 'none';
+      /* 선택 초기화 */
       var locSel = hlocCell.querySelector('select');
       if (locSel) locSel.value = 'none';
       var extra = document.getElementById('handleLocExtra_' + n);
       if (extra) extra.classList.remove('show');
+      var locInput = document.getElementById('hlocInput_' + n);
+      if (locInput) locInput.value = '';
+    } else {
+      hlocCell.style.visibility = '';
+      hlocCell.style.opacity    = '';
+      hlocCell.style.pointerEvents = '';
     }
   }
 }
@@ -1738,25 +1755,25 @@ function submitOrder() {
 
   for (var i = 0; i < orderRows.length; i++) {
     var row = orderRows[i];
-    var rowId = row.id.replace('row_', ''); /* 실제 행 ID 사용 */
     var cells = row.querySelectorAll('td');
 
-    var sizeW   = cells[2] ? cells[2].querySelector('input') : null;
-    var sizeH   = cells[3] ? cells[3].querySelector('input') : null;
-    var qtyEl   = row.querySelector('.qty-input');
-    var typeEl  = row.querySelector('.type-select');
-    var dirEl   = row.querySelector('.dir-select');
-    var colorEl = row.querySelector('.color-select');
-    var allSels = row.querySelectorAll('select');
-    var finishSel = allSels[allSels.length - 1];
+    /* 각 요소를 row 내부에서 직접 querySelector로 찾음 (ID 의존 제거) */
+    var sizeW    = cells[2] ? cells[2].querySelector('input') : null;
+    var sizeH    = cells[3] ? cells[3].querySelector('input') : null;
+    var qtyEl    = row.querySelector('.qty-input');
+    var typeEl   = row.querySelector('.type-select');
+    var dirEl    = row.querySelector('.dir-select');
+    var colorEl  = row.querySelector('.color-select');
+    /* 도장형태는 finish-select 클래스로 직접 찾음 */
+    var finishSel = row.querySelector('.finish-select');
 
     var rowHasAny = (sizeW && sizeW.value) || (sizeH && sizeH.value) || (qtyEl && qtyEl.value);
-    if (!rowHasAny) continue; /* 완전히 빈 행은 건너뜀 */
+    if (!rowHasAny) continue;
 
     hasValidRow = true;
-    var rowNo = i + 1;
-    var isEdge  = typeEl  && typeEl.value  === 'edge';
-    var isMaida = dirEl   && dirEl.value   === 'maida';
+    var rowNo  = i + 1;
+    var isEdge  = typeEl && typeEl.value === 'edge';
+    var isMaida = dirEl  && dirEl.value  === 'maida';
 
     if (!sizeW || !sizeW.value) {
       markError(sizeW, 'input');
@@ -1985,7 +2002,7 @@ function collectOrderRows() {
     var colorVal = colorSel ? colorSel.value : '';
 
     // 도장
-    var finishSel = selects[selects.length - 1];
+    var finishSel = row.querySelector(".finish-select");
     var finishMap = { anodize: '아노다이징', fluoro: '불소도장' };
     var finishVal = finishSel ? (finishMap[finishSel.value] || finishSel.value) : '';
 
@@ -2163,13 +2180,12 @@ function buildQuoteFromOrder() {
     var colorVal = colorEl ? (colorEl.value || '—') : '—';
 
     /* 도장 형태 */
-    var finishSelects = row.querySelectorAll('select');
+    var finishSel2 = row.querySelector('.finish-select');
     var finishVal = '—';
     var finishKey = '';
     var finishMap = { 'anodize': '아노다이징', 'fluoro': '불소도장', '': '—' };
-    if (finishSelects.length >= 3) {
-      var fs = finishSelects[finishSelects.length - 1];
-      finishKey = fs.value;
+    if (finishSel2) {
+      finishKey = finishSel2.value;
       finishVal = finishMap[finishKey] || finishKey || '—';
     }
 
