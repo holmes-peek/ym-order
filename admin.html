@@ -345,7 +345,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <div class="quote-action-bar">
           <button type="button" class="btn-quote-pdf" onclick="window.print()">🖨 PDF 저장</button>
           <button type="button" class="btn-quote-email" id="btnSendEmail" onclick="sendQuoteEmail()">📧 견적서 이메일 발송</button>
-          
+          <button type="button" class="btn-cancel-order" onclick="openCancelModal()">🚫 발주 취소</button>
         </div>
         <div class="quote-content">
           <!-- 타이틀 -->
@@ -476,8 +476,10 @@ function loadOrders() {
       var html = '';
       for (var i = 0; i < data.orders.length; i++) {
         var o = data.orders[i];
-        html += '<div class="order-item" onclick="selectOrder(' + i + ')" id="oi_' + i + '" data-idx="' + i + '">' +
-          '<div class="order-item-id">' + o.orderId + '</div>' +
+        var isCancelled = o.status === '취소';
+        html += '<div class="order-item' + (isCancelled ? ' cancelled' : '') + '" onclick="selectOrder(' + i + ')" id="oi_' + i + '" data-idx="' + i + '">' +
+          '<div class="order-item-id">' + o.orderId +
+            (isCancelled ? ' <span class="cancel-tag">취소</span>' : '') + '</div>' +
           '<div class="order-item-company">' + (o.company || '업체명 없음') +
             ' <span class="order-item-count">' + (o.rows ? o.rows.length : 0) + '건</span></div>' +
           '<div class="order-item-meta"><span>' + (o.person || '') + ' ' + (o.phone || '') + '</span>' +
@@ -641,6 +643,183 @@ function openFactory() {
   if (o) { try { sessionStorage.setItem('factoryOrder', JSON.stringify(o)); } catch(e){} }
   window.open('factory.html?orderId=' + encodeURIComponent(window._currentOrderId), '_blank');
 }
+
+/* ── 발주 취소 ── */
+function openCancelModal() {
+  if (!window._currentOrderId) { alert('먼저 발주건을 선택해주세요.'); return; }
+  var o = window._orders ? window._orders.find(function(x){ return x.orderId===window._currentOrderId; }) : null;
+  if (o && o.status === '취소') { alert('이미 취소된 발주건입니다.'); return; }
+  document.getElementById('cancelOrderId').textContent = window._currentOrderId;
+  document.getElementById('cancelCompany').textContent = o ? (o.company || '') : '';
+  document.getElementById('cancelReason').value = '';
+  document.getElementById('cancelStatus').textContent = '';
+  document.getElementById('cancelStatus').style.color = '';
+  document.getElementById('cancelModal').classList.add('show');
+}
+
+function closeCancelModal() {
+  document.getElementById('cancelModal').classList.remove('show');
+}
+
+function closeCancelModalBg(e) {
+  if (e.target === document.getElementById('cancelModal')) closeCancelModal();
+}
+
+function doCancel() {
+  var reason = document.getElementById('cancelReason').value.trim();
+  if (!reason) {
+    document.getElementById('cancelStatus').style.color = '#c0392b';
+    document.getElementById('cancelStatus').textContent = '취소 사유를 입력해주세요.';
+    return;
+  }
+
+  document.getElementById('cancelStatus').style.color = '#1a3a8f';
+  document.getElementById('cancelStatus').textContent = '처리 중...';
+  document.getElementById('doCancelBtn').disabled = true;
+
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+      action: 'cancelOrder',
+      orderId: window._currentOrderId,
+      reason: reason
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.status === 'success') {
+      document.getElementById('cancelStatus').style.color = '#1a6b10';
+      document.getElementById('cancelStatus').textContent = '✅ 취소 처리 완료';
+      /* 목록에서 취소 표시 업데이트 */
+      var item = document.querySelector('#orderList .order-item.active');
+      if (item) {
+        item.classList.add('cancelled');
+        var idEl = item.querySelector('.order-item-id');
+        if (idEl && idEl.querySelector('.cancel-tag') === null) {
+          idEl.innerHTML += ' <span class="cancel-tag">취소</span>';
+        }
+      }
+      /* _orders 데이터 업데이트 */
+      if (window._orders) {
+        var ord = window._orders.find(function(x){ return x.orderId===window._currentOrderId; });
+        if (ord) ord.status = '취소';
+      }
+      setTimeout(closeCancelModal, 1500);
+    } else {
+      document.getElementById('cancelStatus').style.color = '#c0392b';
+      document.getElementById('cancelStatus').textContent = '❌ ' + (data.message || '처리 실패');
+    }
+    document.getElementById('doCancelBtn').disabled = false;
+  })
+  .catch(function() {
+    document.getElementById('cancelStatus').style.color = '#c0392b';
+    document.getElementById('cancelStatus').textContent = '❌ 오류 발생';
+    document.getElementById('doCancelBtn').disabled = false;
+  });
+}
 </script>
+
+<!-- 취소 확인 모달 -->
+<div class="cancel-modal-overlay" id="cancelModal" onclick="closeCancelModalBg(event)">
+  <div class="cancel-modal-box">
+    <div class="cancel-modal-icon">🚫</div>
+    <div class="cancel-modal-title">발주 취소</div>
+    <div class="cancel-modal-info">
+      <span id="cancelCompany" style="font-weight:700"></span>
+      <span class="cancel-order-id" id="cancelOrderId"></span>
+    </div>
+    <div class="cancel-field">
+      <label>취소 사유 <span style="color:#c0392b">*</span></label>
+      <textarea id="cancelReason" class="cancel-reason-area" placeholder="취소 사유를 입력해주세요"></textarea>
+    </div>
+    <div class="cancel-status" id="cancelStatus"></div>
+    <div class="cancel-btns">
+      <button type="button" class="cancel-btn-no" onclick="closeCancelModal()">돌아가기</button>
+      <button type="button" class="cancel-btn-yes" id="doCancelBtn" onclick="doCancel()">취소 확정</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ── 취소 버튼 ── */
+.btn-cancel-order {
+  background: #fff0f0; color: #c0392b;
+  border: 1.5px solid #e8b4b4; border-radius: 7px;
+  padding: 9px 18px; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  -webkit-appearance: none; transition: all 0.15s;
+}
+.btn-cancel-order:hover { background: #c0392b; color: #fff; border-color: #c0392b; }
+
+/* ── 취소 모달 ── */
+.cancel-modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(10,14,28,0.6); z-index: 500;
+  align-items: center; justify-content: center;
+}
+.cancel-modal-overlay.show { display: flex; }
+.cancel-modal-box {
+  background: #fff; border-radius: 16px;
+  padding: 32px 28px 24px; width: 360px;
+  box-shadow: 0 16px 56px rgba(0,0,0,0.25);
+  text-align: center;
+}
+.cancel-modal-icon { font-size: 40px; margin-bottom: 10px; }
+.cancel-modal-title {
+  font-size: 18px; font-weight: 900; color: #c0392b; margin-bottom: 8px;
+}
+.cancel-modal-info {
+  font-size: 13px; color: #1a1f2e; margin-bottom: 18px;
+  display: flex; flex-direction: column; gap: 3px; align-items: center;
+}
+.cancel-order-id {
+  font-family: 'DM Mono', monospace; font-size: 11px; color: #8a96b0;
+}
+.cancel-field {
+  text-align: left; margin-bottom: 10px;
+}
+.cancel-field label {
+  font-size: 11px; font-weight: 700; color: #6b7494;
+  display: block; margin-bottom: 6px;
+}
+.cancel-reason-area {
+  width: 100%; min-height: 80px; resize: vertical;
+  border: 1.5px solid #d0d6e8; border-radius: 8px;
+  padding: 8px 12px; font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; color: #1a1f2e; outline: none;
+  background: #fafbfe; transition: border-color 0.2s; line-height: 1.6;
+}
+.cancel-reason-area:focus { border-color: #c0392b; }
+.cancel-reason-area::placeholder { color: #c0c8dc; }
+.cancel-status {
+  font-size: 12px; min-height: 18px; margin-bottom: 12px; font-weight: 600;
+}
+.cancel-btns { display: flex; gap: 10px; justify-content: center; }
+.cancel-btn-no {
+  background: #f0f2f7; color: #1a1f2e; border: none; border-radius: 8px;
+  padding: 10px 22px; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: 'Noto Sans KR', sans-serif; -webkit-appearance: none;
+}
+.cancel-btn-yes {
+  background: #c0392b; color: #fff; border: none; border-radius: 8px;
+  padding: 10px 22px; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: 'Noto Sans KR', sans-serif; -webkit-appearance: none;
+  transition: background 0.15s;
+}
+.cancel-btn-yes:hover { background: #a93226; }
+.cancel-btn-yes:disabled { background: #c0c8dc; cursor: not-allowed; }
+
+/* ── 취소된 발주 목록 표시 ── */
+.order-item.cancelled {
+  opacity: 0.55;
+  background: #fff5f5 !important;
+  border-left: 3px solid #c0392b !important;
+}
+.cancel-tag {
+  display: inline-block; background: #c0392b; color: #fff;
+  font-size: 9px; font-weight: 700; padding: 1px 6px;
+  border-radius: 8px; margin-left: 5px; vertical-align: middle;
+}
+</style>
 </body>
 </html>
