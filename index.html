@@ -343,6 +343,18 @@
   .btn-add:hover { background: var(--steel-light); }
   .btn-add .plus { font-size: 16px; font-weight: 300; }
 
+  .btn-copy-row {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #fff; color: var(--steel);
+    border: 1.5px solid var(--border);
+    border-radius: 7px; padding: 8px 16px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; -webkit-appearance: none;
+  }
+  .btn-copy-row:hover { background: var(--steel); color: #fff; border-color: var(--steel); }
+  .btn-copy-row .plus { font-size: 14px; }
+
   /* ── 합계 영역 ── */
   .summary-area {
     margin-top: 0;
@@ -724,6 +736,9 @@
     <div class="add-row-bar">
       <button type="button" class="btn-add" onclick="addRow()">
         <span class="plus">+</span> 행 추가
+      </button>
+      <button type="button" class="btn-copy-row" onclick="copyLastRow()">
+        <span class="plus">⧉</span> 복사 행 추가
       </button>
     </div>
   </div>
@@ -1667,6 +1682,122 @@ function printOrder() {
   // 견적서 닫기
   document.getElementById('calcPage').classList.remove('show');
   window.print();
+}
+
+/* ── 복사 행 추가 — 마지막 행 내용 그대로 복사 ── */
+function copyLastRow() {
+  var tbody = document.getElementById('orderBody');
+  var rows = tbody.querySelectorAll('tr');
+  if (rows.length === 0) { addRow(); return; }
+
+  var lastRow = rows[rows.length - 1];
+
+  /* 마지막 행에서 값 수집 */
+  var cells = lastRow.querySelectorAll('td');
+  var sizeW    = cells[2] ? (cells[2].querySelector('input') ? cells[2].querySelector('input').value : '') : '';
+  var sizeH    = cells[3] ? (cells[3].querySelector('input') ? cells[3].querySelector('input').value : '') : '';
+  var qty      = lastRow.querySelector('.qty-input')    ? lastRow.querySelector('.qty-input').value    : '';
+  var typeVal  = lastRow.querySelector('.type-select')  ? lastRow.querySelector('.type-select').value  : '';
+  var dirVal   = lastRow.querySelector('.dir-select')   ? lastRow.querySelector('.dir-select').value   : '';
+  var colorVal = lastRow.querySelector('.color-select') ? lastRow.querySelector('.color-select').value : '';
+  var finishVal= lastRow.querySelector('.finish-select')? lastRow.querySelector('.finish-select').value: '';
+
+  /* 손잡이 길이 */
+  var hlenChecked = lastRow.querySelector('input[name^="hlen_"]:checked');
+  var hlenVal = hlenChecked ? hlenChecked.value : '';
+  var hlenCustom = lastRow.querySelector('.handle-len-custom input');
+  var hlenCustomVal = (hlenCustom && hlenVal === 'custom') ? hlenCustom.value : '';
+
+  /* 손잡이 위치 */
+  var hlocSel = lastRow.querySelector('.hloc-select');
+  var hlocVal = hlocSel ? hlocSel.value : 'none';
+  var hlocExtra = lastRow.querySelector('.handle-loc-extra input');
+  var hlocMm  = (hlocExtra && hlocVal !== 'none') ? hlocExtra.value : '';
+
+  /* 보링 위치 */
+  var boringItems = lastRow.querySelectorAll('.boring-item');
+  var boringData  = [];
+  for (var b = 0; b < boringItems.length; b++) {
+    var bInputs = boringItems[b].querySelectorAll('input');
+    boringData.push({
+      top: bInputs[0] ? bInputs[0].value : '',
+      bot: bInputs[1] ? bInputs[1].value : ''
+    });
+  }
+
+  /* 새 행 추가 */
+  addRow();
+  var newRow = tbody.querySelectorAll('tr')[tbody.querySelectorAll('tr').length - 1];
+  var newCells = newRow.querySelectorAll('td');
+
+  /* 값 적용 */
+  if (newCells[2] && newCells[2].querySelector('input')) newCells[2].querySelector('input').value = sizeW;
+  if (newCells[3] && newCells[3].querySelector('input')) newCells[3].querySelector('input').value = sizeH;
+  var newQty = newRow.querySelector('.qty-input');
+  if (newQty) newQty.value = qty;
+
+  /* 타입 */
+  var newType = newRow.querySelector('.type-select');
+  if (newType && typeVal) {
+    newType.value = typeVal;
+    onTypeChange(newType);
+  }
+
+  /* 도어 위치 */
+  var newDir = newRow.querySelector('.dir-select');
+  if (newDir && dirVal) {
+    newDir.value = dirVal;
+    onDirChange(newDir);
+  }
+
+  /* 컬러 */
+  var newColor = newRow.querySelector('.color-select');
+  if (newColor) newColor.value = colorVal;
+
+  /* 도장 */
+  var newFinish = newRow.querySelector('.finish-select');
+  if (newFinish) newFinish.value = finishVal;
+
+  /* 손잡이 길이 복원 */
+  if (hlenVal && typeVal !== 'edge') {
+    var newRadio = newRow.querySelector('input[value="' + hlenVal + '"][name^="hlen_"]');
+    if (newRadio) {
+      newRadio.checked = true;
+      toggleHandleLen(newRadio, rowCount);
+      if (hlenVal === 'custom' && hlenCustomVal) {
+        var newHlenInp = newRow.querySelector('.handle-len-custom input');
+        if (newHlenInp) { newHlenInp.disabled = false; newHlenInp.value = hlenCustomVal; }
+      }
+    }
+  }
+
+  /* 손잡이 위치 복원 */
+  if (typeVal !== 'edge') {
+    var newHloc = newRow.querySelector('.hloc-select');
+    if (newHloc && hlocVal) {
+      newHloc.value = hlocVal;
+      toggleHandleLoc(newHloc, rowCount);
+      if (hlocVal !== 'none' && hlocMm) {
+        var newHlocInp = newRow.querySelector('.handle-loc-extra input');
+        if (newHlocInp) newHlocInp.value = hlocMm;
+      }
+    }
+  }
+
+  /* 보링 위치 복원 */
+  for (var bd = 0; bd < boringData.length; bd++) {
+    addBoring(rowCount);
+    var list = document.getElementById('boringList_' + rowCount);
+    if (list) {
+      var items = list.querySelectorAll('.boring-item');
+      var last  = items[items.length - 1];
+      if (last) {
+        var bInps = last.querySelectorAll('input');
+        if (bInps[0]) bInps[0].value = boringData[bd].top;
+        if (bInps[1]) bInps[1].value = boringData[bd].bot;
+      }
+    }
+  }
 }
 
 /* ── 도면 이미지 첨부 ── */
