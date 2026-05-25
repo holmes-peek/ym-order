@@ -288,6 +288,62 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 }
 .email-btn-send:disabled { background: #8a96b0; cursor: not-allowed; }
 .email-status { font-size: 12px; margin-top: 8px; text-align: center; min-height: 18px; }
+
+/* ── 발주 목록 X 버튼 ── */
+.order-item { position: relative; padding-right: 28px !important; }
+.order-item-del {
+  position: absolute; top: 50%; right: 8px; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: #ccc;
+  font-size: 14px; padding: 2px 4px; border-radius: 4px; line-height: 1;
+  -webkit-appearance: none;
+}
+.order-item-del:hover { color: #c0392b; background: #fff0f0; }
+
+/* ── 견적서 운송비 / 수량합계 행 ── */
+.q-shipping-row td { background: #f8f9fc; border-top: 1px dashed #d0d6e8; }
+.q-qty-total-row td { background: #eef2ff; border-top: 1px solid #d0d6e8; font-size: 13px; }
+
+/* ── 납품 정보 바 ── */
+.q-delivery-bar {
+  background: #fff; border: 1px solid #d0d6e8; border-radius: 10px;
+  padding: 14px 20px; display: flex; gap: 20px; flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.qd-item { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 150px; }
+.qd-lbl { font-size: 11px; font-weight: 700; color: #4a5272; white-space: nowrap; min-width: 48px; }
+.qd-val { font-size: 13px; font-weight: 600; color: #1a1f2e; }
+.qd-date-input {
+  border: none; border-bottom: 1.5px solid #d0d6e8; padding: 4px; font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif; color: #1a1f2e; outline: none; background: transparent;
+}
+.qd-date-input:focus { border-color: #1a3a8f; }
+
+/* ── 기타 박스 ── */
+.q-etc-box { background: #fff; border: 1px solid #d0d6e8; border-radius: 10px; padding: 14px 20px; display: flex; gap: 12px; }
+.q-etc-label { font-size: 11px; font-weight: 700; color: #1a1f2e; white-space: nowrap; padding-top: 4px; min-width: 28px; }
+.q-etc-area { flex: 1; min-height: 56px; resize: vertical; border: 1px solid #d0d6e8; border-radius: 6px; padding: 8px 10px; font-family: 'Noto Sans KR', sans-serif; font-size: 12px; color: #1a1f2e; outline: none; background: #fafbfe; line-height: 1.6; }
+.q-etc-area:focus { border-color: #1a3a8f; }
+
+/* ── 공급자 박스 ── */
+.q-supplier-box { background: #fff; border: 1.5px solid #1a1f2e; border-radius: 10px; overflow: hidden; }
+.qs-title { background: #1a1f2e; color: #fff; font-size: 12px; font-weight: 700; padding: 8px 16px; letter-spacing: 4px; text-align: center; }
+.qs-body { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+.qs-account-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.qs-badge { display: inline-block; background: #1a1f2e; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; white-space: nowrap; }
+.qs-badge.alt { background: #1a3a8f; }
+.qs-account { font-size: 12px; font-weight: 600; color: #1a1f2e; line-height: 1.6; }
+.qs-extra-wrap { border-top: 1px dashed #d0d6e8; padding-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+.qs-extra-label { font-size: 11px; font-weight: 700; color: #6b7494; }
+.qs-extra-area { width: 100%; min-height: 60px; resize: vertical; border: 1px solid #d0d6e8; border-radius: 6px; padding: 8px 10px; font-family: 'Noto Sans KR', sans-serif; font-size: 12px; color: #1a1f2e; outline: none; background: #fafbfe; line-height: 1.6; }
+.qs-extra-area:focus { border-color: #1a3a8f; }
+
+@media print {
+  .q-shipping-row td, .q-qty-total-row td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .q-delivery-bar, .q-etc-box, .q-supplier-box { border: 1px solid #ccc !important; }
+  .qs-title { background: #1a1f2e !important; }
+  .qd-date-input, .q-etc-area, .qs-inp { border-bottom: 1px solid #ccc !important; font-size: 10px !important; }
+  .order-item-del { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -345,7 +401,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <div class="quote-action-bar">
           <button type="button" class="btn-quote-pdf" onclick="window.print()">🖨 PDF 저장</button>
           <button type="button" class="btn-quote-email" id="btnSendEmail" onclick="sendQuoteEmail()">📧 견적서 이메일 발송</button>
-          <button type="button" class="btn-cancel-order" onclick="openCancelModal()">🚫 발주 취소</button>
+
         </div>
         <div class="quote-content">
           <!-- 타이틀 -->
@@ -364,7 +420,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
               <div class="q-meta-row"><span>견적일자</span><span id="qDate">—</span></div>
               <div class="q-meta-row"><span>작성일</span><span id="qToday">—</span></div>
               <div class="q-meta-row"><span>발주번호</span><span id="qOrderId">—</span></div>
-              <div class="q-meta-row"><span>담&nbsp;&nbsp;&nbsp;당</span><span>와이엠</span></div>
+              <div class="q-meta-row"><span>담&nbsp;&nbsp;&nbsp;당</span><span>이창열 과장</span></div>
+              <div class="q-meta-row"><span>연&nbsp;락&nbsp;처</span><span>010-7633-2220</span></div>
             </div>
           </div>
           <!-- 견적 테이블 -->
@@ -389,6 +446,20 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
                 </tr>
               </thead>
               <tbody id="qTableBody"></tbody>
+              <tfoot>
+                <tr class="q-shipping-row">
+                  <td colspan="11" style="text-align:right;font-size:11px;color:#6b7494;padding-right:8px">운송비</td>
+                  <td><input type="number" class="q-input" value="1" style="width:40px;text-align:center" readonly></td>
+                  <td><input type="number" class="q-input q-ship-unit" placeholder="기입" style="width:72px" oninput="qTotalRecalc()"></td>
+                  <td class="q-amount" id="qa_ship">—</td>
+                </tr>
+                <tr class="q-qty-total-row">
+                  <td colspan="10" style="text-align:right;font-size:11px;font-weight:700;color:#1a1f2e;padding-right:8px">수량 합계</td>
+                  <td colspan="4" style="text-align:left;font-size:13px;font-weight:700;color:#1a3a8f;padding-left:8px">
+                    <span id="qQtyTotal">0</span> EA
+                  </td>
+                </tr>
+              </tfoot>
             </table>
           </div>
           <!-- 합계 -->
@@ -403,6 +474,36 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
           <div class="q-footer">
             <p>※ 본 견적서의 유효기간은 발행일로부터 30일입니다.</p>
             <p>※ 부가세는 별도이며, 위 금액에 포함되지 않습니다.</p>
+          </div>
+          <!-- 납품 정보 -->
+          <div class="q-delivery-bar">
+            <div class="qd-item"><span class="qd-lbl">납품 장소</span><span class="qd-val" id="qDelivAddr">—</span></div>
+            <div class="qd-item"><span class="qd-lbl">수&nbsp;령&nbsp;인</span><span class="qd-val" id="qDelivPerson">—</span></div>
+            <div class="qd-item"><span class="qd-lbl">연&nbsp;락&nbsp;처</span><span class="qd-val" id="qDelivPhone">—</span></div>
+            <div class="qd-item"><span class="qd-lbl">납품 일자</span><input type="date" class="qd-date-input" id="qDelivDate"></div>
+          </div>
+          <!-- 기타 -->
+          <div class="q-etc-box">
+            <div class="q-etc-label">기타</div>
+            <textarea class="q-etc-area" id="qEtcText" placeholder="기타 요청사항"></textarea>
+          </div>
+          <!-- 입금 안내 / 공급자 자유 입력 -->
+          <div class="q-supplier-box">
+            <div class="qs-title">입&nbsp;&nbsp;금&nbsp;&nbsp;안&nbsp;&nbsp;내</div>
+            <div class="qs-body">
+              <div class="qs-account-row">
+                <span class="qs-badge">세계 미발행 시</span>
+                <span class="qs-account">★ 입금계좌 : 카카오뱅크 3333-06-8468830 &nbsp;(예금주: 이창열)</span>
+              </div>
+              <div class="qs-account-row">
+                <span class="qs-badge alt">세계 발행 시</span>
+                <span class="qs-account">★ 입금계좌 : 270-134648-01-017 기업은행 &nbsp;(RAHMAN MD MAHABOUB_대륭M.P)</span>
+              </div>
+              <div class="qs-extra-wrap">
+                <div class="qs-extra-label">추가 안내사항</div>
+                <textarea class="qs-extra-area" placeholder="추가로 기재할 내용을 입력하세요"></textarea>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -478,12 +579,10 @@ function loadOrders() {
         var o = data.orders[i];
         var isCancelled = o.status === '취소';
         html += '<div class="order-item' + (isCancelled ? ' cancelled' : '') + '" onclick="selectOrder(' + i + ')" id="oi_' + i + '" data-idx="' + i + '">' +
-          '<div class="order-item-id">' + o.orderId +
-            (isCancelled ? ' <span class="cancel-tag">취소</span>' : '') + '</div>' +
-          '<div class="order-item-company">' + (o.company || '업체명 없음') +
-            ' <span class="order-item-count">' + (o.rows ? o.rows.length : 0) + '건</span></div>' +
-          '<div class="order-item-meta"><span>' + (o.person || '') + ' ' + (o.phone || '') + '</span>' +
-            '<span>' + (o.quoteDate || o.submitTime || '') + '</span></div>' +
+          '<div class="order-item-id">' + o.orderId + (isCancelled ? ' <span class="cancel-tag">취소</span>' : '') + '</div>' +
+          '<div class="order-item-company">' + (o.company || '업체명 없음') + ' <span class="order-item-count">' + (o.rows ? o.rows.length : 0) + '건</span></div>' +
+          '<div class="order-item-meta"><span>' + (o.person || '') + ' ' + (o.phone || '') + '</span><span>' + (o.quoteDate || o.submitTime || '') + '</span></div>' +
+          '<button type="button" class="order-item-del" onclick="hideOrder(event,' + i + ')" title="목록에서 숨기기">✕</button>' +
           '</div>';
       }
       document.getElementById('orderList').innerHTML = html;
@@ -494,82 +593,139 @@ function loadOrders() {
     });
 }
 
+/* ── 발주 목록에서 숨기기 ── */
+function hideOrder(e, idx) {
+  e.stopPropagation();
+  var item = document.getElementById('oi_' + idx);
+  if (item) {
+    item.style.opacity = '0';
+    item.style.transition = 'opacity 0.3s';
+    setTimeout(function() { item.style.display = 'none'; }, 300);
+  }
+}
+
 /* ── 발주 선택 → 견적서 생성 ── */
 var qRowCount = 0;
 
 function selectOrder(idx) {
-  // 활성화 표시
   var items = document.querySelectorAll('.order-item');
   for (var i = 0; i < items.length; i++) items[i].classList.remove('active');
   document.getElementById('oi_' + idx).classList.add('active');
-
-  var o = window._orders[idx];
-  if (!o) return;
+  var o = window._orders[idx]; if (!o) return;
   window._currentOrderId = o.orderId;
 
-  // 고객 정보
+  /* 고객 정보 */
   document.getElementById('qCompany').textContent = o.company || '—';
   document.getElementById('qPerson').textContent  = o.person  || '—';
   document.getElementById('qPhone').textContent   = o.phone   || '—';
   document.getElementById('qDate').textContent    = o.quoteDate || '—';
   document.getElementById('qOrderId').textContent = o.orderId;
-
   var today = new Date();
   document.getElementById('qToday').textContent =
     today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
 
-  // 견적 테이블 생성
+  /* 납품 정보 자동 연동 */
+  var addrEl = document.getElementById('qDelivAddr');
+  if (addrEl) addrEl.textContent = o.address || '—';
+  var personEl = document.getElementById('qDelivPerson');
+  if (personEl) personEl.textContent = o.recipient || '—';
+  var phoneEl = document.getElementById('qDelivPhone');
+  if (phoneEl) phoneEl.textContent = o.recPhone || '—';
+
+  /* 기타(요청사항) 자동 연동 */
+  var etcEl = document.getElementById('qEtcText');
+  if (etcEl) etcEl.value = o.etc || '';
+
+  /* 운송비 초기화 */
+  var shipUnit = document.querySelector('.q-ship-unit');
+  if (shipUnit) { shipUnit.value = ''; document.getElementById('qa_ship').textContent = '—'; }
+
+  /* 테이블 생성 */
   var tbody = document.getElementById('qTableBody');
-  tbody.innerHTML = '';
-  qRowCount = 0;
+  tbody.innerHTML = ''; qRowCount = 0;
   var rows = o.rows || [];
   for (var j = 0; j < rows.length; j++) {
     qRowCount++;
-    var r = rows[j];
-    var tr = document.createElement('tr');
-    tr.id = 'qr_' + qRowCount;
-    var n = qRowCount;
+    var r = rows[j]; var n = qRowCount;
+    var w = parseFloat(r.sizeW) || 0;
+    var h = parseFloat(r.sizeH) || 0;
+    var finKey = r.finish || '';
+    var baseUnit = (w && h) ? ((w + h) * 2 * 39) : 0;
+    var autoUnit = baseUnit ? Math.round(baseUnit * (finKey === 'fluoro' ? 1.15 : 1) / 10) * 10 : 0;
+    var qty = parseFloat(r.qty) || 0;
+    var autoAmt = autoUnit * qty;
+
+    var typeLabel = r.type === 'edge' ? '엣지만' : r.type === 'handle' ? '손잡이 도어' : (r.type || '—');
+    var dirLabel  = {maida:'마이다',left:'좌경',right:'우경',none:'구분없음','':'—'}[r.direction] || r.direction || '—';
+    var finLabel  = r.finish === 'anodize' ? '아노다이징' : r.finish === 'fluoro' ? '불소도장' : (r.finish || '—');
+
+    var tr = document.createElement('tr'); tr.id = 'qr_' + n;
     tr.innerHTML =
       '<td style="font-family:\'DM Mono\',monospace;font-size:10px;color:#6b7494">' + (r.no || n) + '</td>' +
       '<td style="font-weight:600">' + (r.item || '21T 금속') + '</td>' +
-      '<td>' + (r.type || '—') + '</td>' +
-      '<td>' + (r.direction || '—') + '</td>' +
-      '<td>' + (r.color || '—') + '</td>' +
-      '<td>' + (r.finish || '—') + '</td>' +
+      '<td>' + typeLabel + '</td><td>' + dirLabel + '</td>' +
+      '<td>' + (r.color || '—') + '</td><td>' + finLabel + '</td>' +
       '<td style="font-family:\'DM Mono\',monospace">' + (r.sizeW || '—') + '</td>' +
       '<td style="font-family:\'DM Mono\',monospace">' + (r.sizeH || '—') + '</td>' +
       '<td style="font-size:11px">' + (r.boring || '—') + '</td>' +
       '<td>' + (r.handleLen || '—') + '</td>' +
       '<td>' + (r.handlePos || '—') + '</td>' +
-      '<td><input type="number" class="q-input q-qty" value="' + (r.qty || '') + '" placeholder="기입" style="width:46px" oninput="qRecalc(' + n + ')"></td>' +
-      '<td><input type="number" class="q-input q-unit" placeholder="기입" style="width:72px" oninput="qRecalc(' + n + ')"></td>' +
-      '<td class="q-amount" id="qa_' + n + '">—</td>';
+      '<td><input type="number" class="q-input q-qty" value="' + (r.qty || '') + '" style="width:46px" oninput="qRecalc(' + n + ')"></td>' +
+      '<td><input type="number" class="q-input q-unit" value="' + (autoUnit || '') + '" placeholder="기입" style="width:72px" data-w="' + w + '" data-h="' + h + '" data-fin="' + finKey + '" oninput="qRecalc(' + n + ')"></td>' +
+      '<td class="q-amount" id="qa_' + n + '">' + (autoAmt > 0 ? '₩ ' + autoAmt.toLocaleString() : '—') + '</td>';
     tbody.appendChild(tr);
   }
 
+  /* 초기 로드 — 수량·단가·금액 모두 즉시 계산 */
+  for (var k = 1; k <= qRowCount; k++) { qRecalc(k); }
   qTotalRecalc();
   document.getElementById('quotePlaceholder').style.display = 'none';
   document.getElementById('quoteArea').style.display = 'flex';
 }
 
 function qRecalc(n) {
-  var row = document.getElementById('qr_' + n);
-  if (!row) return;
+  var row = document.getElementById('qr_' + n); if (!row) return;
   var qty  = parseFloat(row.querySelector('.q-qty').value)  || 0;
-  var unit = parseFloat(row.querySelector('.q-unit').value) || 0;
-  var amt  = qty * unit;
-  document.getElementById('qa_' + n).textContent = amt > 0 ? '₩ ' + amt.toLocaleString() : '—';
+  var uEl  = row.querySelector('.q-unit');
+  var unit = parseFloat(uEl ? uEl.value : 0) || 0;
+  /* 단가 비어있으면 자동계산 */
+  if (!unit && uEl) {
+    var w = parseFloat(uEl.getAttribute('data-w')) || 0;
+    var h = parseFloat(uEl.getAttribute('data-h')) || 0;
+    var f = uEl.getAttribute('data-fin') || '';
+    var base = (w && h) ? ((w + h) * 2 * 39) : 0;
+    unit = base ? Math.round(base * (f === 'fluoro' ? 1.15 : 1) / 10) * 10 : 0;
+    if (unit && uEl) uEl.value = unit;
+  }
+  var amt = qty * unit;
+  var amtEl = document.getElementById('qa_' + n);
+  if (amtEl) amtEl.textContent = amt > 0 ? '₩ ' + amt.toLocaleString() : '—';
   qTotalRecalc();
 }
 
 function qTotalRecalc() {
+  /* 품목 행 합산 */
   var rows = document.querySelectorAll('#qTableBody tr');
-  var sub = 0;
+  var sub = 0; var qtySum = 0;
   for (var i = 0; i < rows.length; i++) {
     var q = rows[i].querySelector('.q-qty');
     var u = rows[i].querySelector('.q-unit');
-    sub += (parseFloat(q ? q.value : 0) || 0) * (parseFloat(u ? u.value : 0) || 0);
+    var qty  = parseFloat(q ? q.value : 0) || 0;
+    var unit = parseFloat(u ? u.value : 0) || 0;
+    sub    += qty * unit;
+    qtySum += qty;
   }
+  /* 운송비 (수량합계 미포함) */
+  var shipUnit = document.querySelector('.q-ship-unit');
+  var shipAmt  = parseFloat(shipUnit ? shipUnit.value : 0) || 0;
+  var shipEl   = document.getElementById('qa_ship');
+  if (shipEl) shipEl.textContent = shipAmt > 0 ? '₩ ' + shipAmt.toLocaleString() : '—';
+  sub += shipAmt;
+
+  /* 수량 합계 (운송비 1 제외) */
+  var qtyTotalEl = document.getElementById('qQtyTotal');
+  if (qtyTotalEl) qtyTotalEl.textContent = qtySum;
+
   var vat = Math.round(sub * 0.1);
   document.getElementById('qSubtotal').textContent = '₩ ' + sub.toLocaleString();
   document.getElementById('qVat').textContent      = '₩ ' + vat.toLocaleString();
