@@ -605,6 +605,10 @@ function loadOrders() {
 /* ── 공장 발주서 열기 ── */
 function openFactoryPage() {
   if (!window._currentOrderId) { alert('먼저 발주건을 선택해주세요.'); return; }
+  var o = window._orders ? window._orders.find(function(x){ return x.orderId === window._currentOrderId; }) : null;
+  if (o) {
+    try { sessionStorage.setItem('factoryOrderData', JSON.stringify(o)); } catch(e) {}
+  }
   var url = 'factory.html?orderId=' + encodeURIComponent(window._currentOrderId);
   window.open(url, '_blank');
 }
