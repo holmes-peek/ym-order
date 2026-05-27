@@ -593,15 +593,73 @@ function loadOrders() {
     });
 }
 
-/* ── 발주 목록에서 숨기기 ── */
+/* ── 발주 삭제 (커스텀 모달) ── */
+var _deleteIdx = -1;
+
 function hideOrder(e, idx) {
   e.stopPropagation();
-  var item = document.getElementById('oi_' + idx);
-  if (item) {
-    item.style.opacity = '0';
-    item.style.transition = 'opacity 0.3s';
-    setTimeout(function() { item.style.display = 'none'; }, 300);
-  }
+  var o = window._orders && window._orders[idx];
+  if (!o) return;
+  _deleteIdx = idx;
+  document.getElementById('delModalCompany').textContent  = o.company  || '—';
+  document.getElementById('delModalOrderId').textContent  = o.orderId  || '—';
+  document.getElementById('delModalStatus').textContent   = '';
+  document.getElementById('delModalStatus').style.color   = '';
+  document.getElementById('delConfirmBtn').disabled       = false;
+  document.getElementById('deleteModal').classList.add('show');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('show');
+  _deleteIdx = -1;
+}
+
+function confirmDelete() {
+  if (_deleteIdx < 0) return;
+  var o = window._orders && window._orders[_deleteIdx];
+  if (!o) return;
+  var orderId = o.orderId;
+
+  document.getElementById('delModalStatus').style.color = '#1a3a8f';
+  document.getElementById('delModalStatus').textContent = '삭제 중...';
+  document.getElementById('delConfirmBtn').disabled = true;
+
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'deleteOrder', orderId: orderId })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.status === 'success') {
+      document.getElementById('delModalStatus').style.color = '#1a6b10';
+      document.getElementById('delModalStatus').textContent = '✅ 삭제 완료!';
+      var item = document.getElementById('oi_' + _deleteIdx);
+      if (item) {
+        item.style.opacity = '0';
+        item.style.transition = 'opacity 0.3s';
+        setTimeout(function() { item.remove(); }, 300);
+      }
+      if (window._orders) window._orders.splice(_deleteIdx, 1);
+      if (window._currentOrderId === orderId) {
+        window._currentOrderId = '';
+        document.getElementById('quoteArea').style.display = 'none';
+        document.getElementById('quotePlaceholder').style.display = 'flex';
+      }
+      setTimeout(closeDeleteModal, 800);
+    } else {
+      document.getElementById('delModalStatus').style.color = '#c0392b';
+      document.getElementById('delModalStatus').textContent = '❌ 실패: ' + (data.message || '오류');
+      document.getElementById('delConfirmBtn').disabled = false;
+    }
+  })
+  .catch(function() {
+    /* 네트워크 오류 → 화면에서만 제거 */
+    document.getElementById('delModalStatus').style.color = '#c0392b';
+    document.getElementById('delModalStatus').textContent = '⚠ 서버 오류 — 화면에서만 제거됩니다';
+    var item = document.getElementById('oi_' + _deleteIdx);
+    if (item) { item.style.opacity='0'; setTimeout(function(){ item.remove(); }, 300); }
+    setTimeout(closeDeleteModal, 1200);
+  });
 }
 
 /* ── 발주 선택 → 견적서 생성 ── */
@@ -976,6 +1034,63 @@ function doCancel() {
   font-size: 9px; font-weight: 700; padding: 1px 6px;
   border-radius: 8px; margin-left: 5px; vertical-align: middle;
 }
+</style>
+<!-- 발주 삭제 확인 모달 -->
+<div class="del-modal-overlay" id="deleteModal" onclick="if(event.target===this)closeDeleteModal()">
+  <div class="del-modal-box">
+    <div class="del-modal-icon">🗑️</div>
+    <div class="del-modal-title">발주 삭제</div>
+    <div class="del-modal-sub">삭제하면 복구가 불가능합니다</div>
+    <div class="del-modal-info">
+      <div class="del-info-row"><span>업체명</span><span id="delModalCompany">—</span></div>
+      <div class="del-info-row"><span>발주번호</span><span id="delModalOrderId" style="font-family:monospace;font-size:11px">—</span></div>
+    </div>
+    <div class="del-modal-status" id="delModalStatus"></div>
+    <div class="del-modal-btns">
+      <button type="button" class="del-btn-cancel" onclick="closeDeleteModal()">취소</button>
+      <button type="button" class="del-btn-confirm" id="delConfirmBtn" onclick="confirmDelete()">삭제 확정</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.del-modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(10,14,28,0.6); z-index: 600;
+  align-items: center; justify-content: center;
+}
+.del-modal-overlay.show { display: flex; }
+.del-modal-box {
+  background: #fff; border-radius: 16px; padding: 32px 28px 24px;
+  width: 340px; text-align: center;
+  box-shadow: 0 16px 56px rgba(0,0,0,0.25);
+}
+.del-modal-icon { font-size: 38px; margin-bottom: 10px; }
+.del-modal-title { font-size: 18px; font-weight: 900; color: #c0392b; margin-bottom: 4px; }
+.del-modal-sub { font-size: 12px; color: #8a96b0; margin-bottom: 18px; }
+.del-modal-info {
+  background: #fff5f5; border: 1px solid #f5c6c6; border-radius: 8px;
+  padding: 12px 16px; margin-bottom: 14px; text-align: left;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.del-info-row { display: flex; justify-content: space-between; font-size: 12px; }
+.del-info-row span:first-child { color: #8a96b0; font-weight: 600; }
+.del-info-row span:last-child { color: #1a1f2e; font-weight: 700; }
+.del-modal-status { font-size: 12px; min-height: 18px; margin-bottom: 12px; font-weight: 600; }
+.del-modal-btns { display: flex; gap: 10px; justify-content: center; }
+.del-btn-cancel {
+  background: #f0f2f7; color: #1a1f2e; border: none; border-radius: 8px;
+  padding: 10px 24px; font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif; -webkit-appearance: none;
+}
+.del-btn-confirm {
+  background: #c0392b; color: #fff; border: none; border-radius: 8px;
+  padding: 10px 24px; font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif; -webkit-appearance: none;
+  transition: background 0.15s;
+}
+.del-btn-confirm:hover { background: #a93226; }
+.del-btn-confirm:disabled { background: #c0c8dc; cursor: not-allowed; }
 </style>
 </body>
 </html>
