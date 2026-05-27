@@ -593,15 +593,59 @@ function loadOrders() {
     });
 }
 
-/* ── 발주 목록에서 숨기기 ── */
+/* ── 발주 삭제 (확인 팝업 → 영구 삭제) ── */
 function hideOrder(e, idx) {
   e.stopPropagation();
+  var o = window._orders && window._orders[idx];
+  var orderId = o ? o.orderId : '?';
+  var company = o ? (o.company || '') : '';
+
+  /* 확인 팝업 */
+  var confirmed = confirm(
+    '발주를 완전히 삭제하시겠습니까?\n\n' +
+    '업체명 : ' + company + '\n' +
+    '발주번호 : ' + orderId + '\n\n' +
+    '⚠ 삭제 후 복구가 불가능합니다.'
+  );
+  if (!confirmed) return;
+
   var item = document.getElementById('oi_' + idx);
-  if (item) {
-    item.style.opacity = '0';
-    item.style.transition = 'opacity 0.3s';
-    setTimeout(function() { item.style.display = 'none'; }, 300);
-  }
+
+  /* Apps Script로 삭제 요청 */
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'deleteOrder', orderId: orderId })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.status === 'success') {
+      /* 목록에서 제거 */
+      if (item) {
+        item.style.opacity = '0';
+        item.style.transition = 'opacity 0.3s';
+        setTimeout(function() { item.remove(); }, 300);
+      }
+      /* _orders 배열에서도 제거 */
+      if (window._orders) window._orders.splice(idx, 1);
+      /* 현재 보고 있던 발주면 견적서 초기화 */
+      if (window._currentOrderId === orderId) {
+        window._currentOrderId = '';
+        document.getElementById('quoteArea').style.display = 'none';
+        document.getElementById('quotePlaceholder').style.display = 'flex';
+      }
+    } else {
+      alert('삭제 실패: ' + (data.message || '오류가 발생했습니다.'));
+    }
+  })
+  .catch(function() {
+    /* 네트워크 오류 시에도 화면에서는 숨김 처리 */
+    if (item) {
+      item.style.opacity = '0';
+      item.style.transition = 'opacity 0.3s';
+      setTimeout(function() { item.remove(); }, 300);
+    }
+    alert('서버 연결 오류 — 화면에서만 제거됩니다.\nSheets 반영은 직접 확인해주세요.');
+  });
 }
 
 /* ── 발주 선택 → 견적서 생성 ── */
