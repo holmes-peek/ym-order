@@ -278,12 +278,27 @@ function init() {
   if (!orderId) {
     document.getElementById('factoryBody').innerHTML =
       '<tr><td colspan="13" style="padding:24px;color:#c0392b;font-size:13px">' +
-      '⚠️ 발주번호가 없습니다.<br><small style="color:#8a96b0">주소창에 ?orderId=ORD-XXXXXXXX-XXXXXX 형식으로 입력해주세요.</small>' +
+      '⚠️ 발주번호가 없습니다.<br><small style="color:#8a96b0">관리자 페이지에서 발주건을 선택 후 [🏭 공장 발주서] 버튼을 눌러주세요.</small>' +
       '</td></tr>';
     return;
   }
 
   document.getElementById('fOrderId').textContent = orderId;
+
+  /* 1순위: sessionStorage에서 직접 데이터 읽기 (admin에서 전달) */
+  try {
+    var cached = sessionStorage.getItem('factoryOrderData');
+    if (cached) {
+      var order = JSON.parse(cached);
+      if (order && order.orderId === orderId) {
+        renderFactory(order);
+        sessionStorage.removeItem('factoryOrderData');
+        return;
+      }
+    }
+  } catch(e) {}
+
+  /* 2순위: Apps Script API로 불러오기 */
   document.getElementById('factoryBody').innerHTML =
     '<tr><td colspan="13" style="padding:20px;color:#1a3a8f">데이터를 불러오는 중...</td></tr>';
 
@@ -297,7 +312,7 @@ function init() {
           '<tr><td colspan="13" style="padding:20px;color:#c0392b">해당 발주번호를 찾을 수 없습니다: ' + orderId + '</td></tr>';
       }
     })
-    .catch(function(err) {
+    .catch(function() {
       document.getElementById('factoryBody').innerHTML =
         '<tr><td colspan="13" style="padding:20px;color:#c0392b">데이터 로드 실패 — 네트워크를 확인해주세요.</td></tr>';
     });
