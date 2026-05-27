@@ -2004,6 +2004,10 @@ function submitOrder() {
     person    : document.getElementById('customerPerson').value.trim(),
     phone     : phone,
     quoteDate : document.getElementById('orderDate').value,
+    address   : document.getElementById('deliveryAddress')  ? document.getElementById('deliveryAddress').value.trim()  : '',
+    recipient : document.getElementById('deliveryPerson')   ? document.getElementById('deliveryPerson').value.trim()   : '',
+    recPhone  : document.getElementById('deliveryPhone')    ? document.getElementById('deliveryPhone').value.trim()    : '',
+    etc       : document.getElementById('orderEtcText')     ? document.getElementById('orderEtcText').value.trim()     : '',
     rows      : rows
   };
 
