@@ -8,26 +8,29 @@
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap');
 
   :root {
-    --steel: #1a1f2e;
-    --steel-mid: #2d3447;
-    --steel-light: #3d4560;
-    --gold: #6b7280;
-    --gold-light: #8e99a8;
-    --silver: #5a6280;
-    --bg: #ffffff;
+    --steel: #23272f;
+    --steel-mid: #2c3040;
+    --steel-light: #3a4055;
+    --bg: #f5f6f8;
     --surface: #ffffff;
-    --border: #d0d6e8;
-    --accent: #1a3a8f;
-    --red: #c0392b;
-    --text: #0f1624;
-    --text-muted: #4a5272;
+    --border: #e4e8f0;
+    --accent: #4a6fa5;
+    --accent-soft: #eef2f8;
+    --red: #e74c3c;
+    --green: #3d8a5e;
+    --text: #2d3142;
+    --text-muted: #6b7694;
+    --silver: #7a8fa8;
+    --gold: #9aa3b8;
+    --gold-light: #c0c8dc;
+    --steel-text: #c8cdd8;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     font-family: 'Noto Sans KR', sans-serif;
-    background: #f4f5f8;
+    background: #f5f6f8;
     color: var(--text);
     min-height: 100vh;
     padding: 24px 16px 60px;
@@ -43,31 +46,40 @@
   }
 
   /* ── 타이틀 한 줄 상단 바 ── */
+  @keyframes metal-shine {
+    0%   { background-position: 0% center }
+    100% { background-position: 200% center }
+  }
   .doc-title-bar {
-    background: #fff;
-    border-bottom: 3px solid var(--steel);
-    padding: 18px 28px 14px;
+    background: linear-gradient(160deg, #23272f 0%, #1a1e26 50%, #2c3040 100%);
+    border-bottom: 3px solid #3a4055;
+    padding: 22px 32px 18px;
     text-align: center;
   }
   .doc-title-bar h1 {
     font-size: 28px;
     font-weight: 900;
-    color: var(--steel);
+    color: #c8cdd8;
     letter-spacing: -0.5px;
     white-space: nowrap;
   }
   .doc-title-bar h1 .hl {
-    background: linear-gradient(135deg, #8e99a8 0%, #4a5260 40%, #9aa3b0 60%, #5a6272 100%);
+    background: linear-gradient(90deg,
+      #9aa3b4 0%, #dde3ee 20%, #f0f3f8 35%,
+      #c8cdd8 50%, #e8ecf5 65%, #b0b8cc 80%, #9aa3b4 100%
+    );
+    background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: metal-shine 4s linear infinite;
   }
 
   /* ── 헤더 메타 (고객명/발주일자) ── */
   .doc-header {
-    background: #f8f9fc;
+    background: #ffffff;
     border-bottom: 1px solid var(--border);
-    padding: 14px 28px;
+    padding: 18px 32px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -86,25 +98,32 @@
   }
   .meta-field label {
     font-size: 10px;
-    letter-spacing: 1.5px;
-    color: var(--silver);
-    text-transform: uppercase;
-    font-weight: 600;
+    letter-spacing: .4px;
+    color: var(--text-muted);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
   .meta-field input {
-    background: #fff;
+    background: #fafbfd;
     border: 1.5px solid var(--border);
-    border-radius: 6px;
+    border-radius: 10px;
     color: var(--text);
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 13px;
-    padding: 7px 12px;
+    padding: 9px 13px;
     width: 180px;
     outline: none;
-    transition: border-color 0.2s;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
-  .meta-field input:focus { border-color: var(--accent); }
-  .meta-field input::placeholder { color: #b0b8cc; }
+  .meta-field input:focus {
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(74,111,165,.12);
+  }
+  .meta-field input::placeholder { color: #bcc4d4; }
 
   /* ── 테이블 래퍼 ── */
   .table-wrap {
@@ -121,16 +140,16 @@
 
   /* ── 컬럼 헤더 ── */
   thead tr {
-    background: var(--steel);
+    background: linear-gradient(180deg, #2c3040 0%, #23272f 100%);
   }
   thead th {
-    color: #ffffff;
-    font-size: 11px;
+    color: #c0c8dc;
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.5px;
-    padding: 10px 8px;
+    letter-spacing: 0.2px;
+    padding: 11px 7px;
     text-align: center;
-    border-right: 1px solid rgba(255,255,255,0.15);
+    border-right: 1px solid rgba(255,255,255,0.06);
     white-space: nowrap;
   }
   thead th:last-child { border-right: none; }
@@ -148,12 +167,12 @@
 
   /* ── 행 ── */
   tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
+    border-bottom: 1.5px solid #edf0f8;
+    transition: background 0.12s;
   }
-  tbody tr:hover { background: #f0f4ff; }
-  tbody tr.row-highlight { background: #fffbf0; }
-  tbody tr.row-highlight:hover { background: #fff5e0; }
+  tbody tr:hover { background: #f0f3fa; }
+  tbody tr.row-highlight { background: #f8f9fc; }
+  tbody tr.row-highlight:hover { background: #eef2fa; }
 
   tbody td {
     padding: 7px 5px;
@@ -168,7 +187,7 @@
   .cell-input, .cell-select {
     width: 100%;
     border: 1px solid transparent;
-    border-radius: 5px;
+    border-radius: 8px;
     background: transparent;
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 12px;
@@ -340,19 +359,19 @@
     transition: background 0.2s;
     -webkit-appearance: none;
   }
-  .btn-add:hover { background: var(--steel-light); }
+  .btn-add:hover { background: linear-gradient(135deg, #3a4055, #4a5270); color: #fff; }
   .btn-add .plus { font-size: 16px; font-weight: 300; }
 
   .btn-copy-row {
     display: inline-flex; align-items: center; gap: 6px;
-    background: #fff; color: var(--steel);
+    background: #fff; color: var(--text-muted);
     border: 1.5px solid var(--border);
-    border-radius: 7px; padding: 8px 16px;
+    border-radius: 10px; padding: 9px 18px;
     font-family: 'Noto Sans KR', sans-serif;
-    font-size: 12px; font-weight: 600;
+    font-size: 12px; font-weight: 700;
     cursor: pointer; transition: all 0.2s; -webkit-appearance: none;
   }
-  .btn-copy-row:hover { background: var(--steel); color: #fff; border-color: var(--steel); }
+  .btn-copy-row:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
   .btn-copy-row .plus { font-size: 14px; }
 
   /* ── 합계 영역 ── */
@@ -437,13 +456,14 @@
     transition: border-color 0.2s;
   }
   .delivery-field input:focus { border-color: var(--accent); }
+  .delivery-field input::placeholder { color: #bcc4d4; }
   .delivery-field input::placeholder { color: #b0b8cc; }
 
   /* 기타 요청사항 */
   .order-etc-bar {
     background: var(--surface);
     border-top: 1px solid var(--border);
-    padding: 14px 28px;
+    padding: 14px 32px;
     display: flex;
     align-items: flex-start;
     gap: 16px;
@@ -591,6 +611,36 @@
   }
   .btn-submit:hover { background: #0f2a6e; }
 
+  /* ✏️ 발주 수정 버튼 */
+  .btn-revise {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,.07); color: #c8cdd8;
+    border: 1px solid rgba(255,255,255,.15); border-radius: 10px;
+    padding: 10px 18px; font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all .2s; -webkit-appearance: none;
+  }
+  .btn-revise:hover { background: rgba(255,255,255,.15); color: #fff; }
+
+  /* 수정 모드 배너 */
+  .revise-banner {
+    display: none; background: linear-gradient(135deg,#1a6b40,#145c35);
+    color: #fff; padding: 10px 32px; font-size: 12px; font-weight: 700;
+    align-items: center; gap: 12px; border-bottom: 1px solid #0f4a28;
+  }
+  .revise-banner.show { display: flex; }
+  .revise-banner .revise-id {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    background: rgba(255,255,255,.15); padding: 2px 10px; border-radius: 20px;
+  }
+  .revise-banner .btn-cancel-rv {
+    margin-left: auto; background: rgba(255,255,255,.12); color: #fff;
+    border: 1px solid rgba(255,255,255,.2); border-radius: 8px;
+    padding: 5px 14px; font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: 'Noto Sans KR', sans-serif; -webkit-appearance: none;
+  }
+  .revise-banner .btn-cancel-rv:hover { background: rgba(255,255,255,.25); }
+
   /* ── 유효성 검사 오류 표시 ── */
   .field-error {
     border: 2px solid #c0392b !important;
@@ -683,6 +733,14 @@
 </head>
 <body>
 <div class="page-wrapper">
+
+  <!-- 수정 모드 배너 -->
+  <div class="revise-banner" id="reviseBanner">
+    <span>✏️ 수정 모드</span>
+    <span class="revise-id" id="reviseBannerId"></span>
+    <span style="font-size:11px;opacity:.8">내용을 수정한 후 📤 발주서 제출 버튼을 눌러주세요</span>
+    <button type="button" class="btn-cancel-rv" onclick="cancelRevise()">✕ 수정 취소</button>
+  </div>
 
   <!-- 타이틀 한 줄 -->
   <div class="doc-title-bar">
@@ -788,7 +846,29 @@
   <div class="action-bar">
     <button type="button" class="btn-color-palette" onclick="openPalette()">🎨 컬러 파렛트</button>
     <button type="button" class="btn-print" onclick="printOrder()">🖨 인쇄 / PDF 저장</button>
+    <button type="button" class="btn-revise" onclick="openReviseModal()">✏️ 발주 수정</button>
     <button type="button" class="btn-submit" onclick="submitOrder()">📤 발주서 제출</button>
+  </div>
+</div>
+
+<!-- 발주 수정 모달 -->
+<div id="reviseModal" class="modal-overlay" onclick="closeReviseModalBg(event)">
+  <div class="modal-box" style="max-width:400px">
+    <div style="font-size:24px;margin-bottom:10px">✏️</div>
+    <div class="modal-title">발주 수정 요청</div>
+    <div class="modal-sub">기존 발주번호를 입력하면<br>내용을 불러와서 수정할 수 있어요</div>
+    <div style="margin:16px 0;text-align:left">
+      <label style="font-size:11px;font-weight:700;color:#6b7694;display:block;margin-bottom:6px">📋 발주번호</label>
+      <input type="text" id="reviseOrderId" placeholder="ORD-20260527-XXXXXX"
+        style="width:100%;border:1.5px solid #e4e8f0;border-radius:10px;padding:10px 14px;font-size:13px;color:#2d3142;outline:none;font-family:inherit">
+    </div>
+    <div id="reviseStatus" style="font-size:12px;min-height:18px;margin-bottom:12px;color:#e74c3c"></div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button type="button" onclick="closeReviseModal()"
+        style="background:#f0f2f7;color:#2d3142;border:none;border-radius:8px;padding:9px 20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">취소</button>
+      <button type="button" onclick="loadForRevise()"
+        style="background:linear-gradient(135deg,#4a6fa5,#3a5a8f);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">불러오기</button>
+    </div>
   </div>
 </div>
 
@@ -802,6 +882,9 @@
            style="width:100%;border-radius:8px;">
     </div>
     <button type="button" class="modal-close-btn" style="margin-top:14px;font-size:13px;color:#4a5272;font-weight:600" onclick="closePaletteBtn()">닫기</button>
+    <p style="margin-top:12px;font-size:11px;color:#9aa3b8;line-height:1.6;text-align:center;padding:0 8px">
+      ⚠️ 주의: 실제 샘플과 모니터 환경에 따라, 컬러가 다소 차이가 있어 보입니다. 참고 바랍니다.
+    </p>
   </div>
 </div>
 
@@ -1102,7 +1185,7 @@
   display: none;
   position: fixed;
   inset: 0;
-  background: #f4f5f8;
+  background: #f5f6f8;
   z-index: 300;
   flex-direction: column;
   overflow-y: auto;
@@ -1840,6 +1923,89 @@ function removeDrawing(idx) {
   renderDrawingPreview();
 }
 
+/* ── 발주 수정 모달 ── */
+var _reviseOrderId = '';
+
+function openReviseModal() {
+  document.getElementById('reviseOrderId').value = '';
+  document.getElementById('reviseStatus').textContent = '';
+  document.getElementById('reviseModal').classList.add('show');
+}
+function closeReviseModal() {
+  document.getElementById('reviseModal').classList.remove('show');
+}
+function closeReviseModalBg(e) {
+  if (e.target === document.getElementById('reviseModal')) closeReviseModal();
+}
+
+function loadForRevise() {
+  var orderId = document.getElementById('reviseOrderId').value.trim();
+  if (!orderId) {
+    document.getElementById('reviseStatus').textContent = '발주번호를 입력해주세요';
+    return;
+  }
+  document.getElementById('reviseStatus').style.color = '#4a6fa5';
+  document.getElementById('reviseStatus').textContent = '불러오는 중...';
+
+  fetch(APPS_SCRIPT_URL + '?action=get&id=' + encodeURIComponent(orderId))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.status === 'success' && data.order) {
+        var o = data.order;
+        /* 헤더 채우기 */
+        document.getElementById('customerName').value   = o.company   || '';
+        document.getElementById('customerPerson').value = o.person    || '';
+        document.getElementById('customerPhone').value  = o.phone     || '';
+        document.getElementById('orderDate').value      = (o.quoteDate||'').substring(0,10);
+        document.getElementById('deliveryAddress').value = o.address   || '';
+        document.getElementById('deliveryPerson').value  = o.recipient || '';
+        document.getElementById('deliveryPhone').value   = o.recPhone  || '';
+        document.getElementById('orderEtcText').value    = o.etc       || '';
+
+        /* 기존 행 제거 후 재생성 */
+        var tbody = document.getElementById('orderBody');
+        tbody.innerHTML = '';
+        rowCount = 0;
+        var rows = o.rows || [];
+        for (var i = 0; i < rows.length; i++) {
+          addRow();
+          var r = rows[i];
+          var row = document.getElementById('row_' + rowCount);
+          if (!row) continue;
+          var cells = row.querySelectorAll('td');
+          if (cells[2] && cells[2].querySelector('input')) cells[2].querySelector('input').value = r.sizeW || '';
+          if (cells[3] && cells[3].querySelector('input')) cells[3].querySelector('input').value = r.sizeH || '';
+          var qty = row.querySelector('.qty-input'); if (qty) qty.value = r.qty || '';
+          var typeEl = row.querySelector('.type-select'); if (typeEl && r.type) { typeEl.value = r.type; onTypeChange(typeEl); }
+          var dirEl  = row.querySelector('.dir-select');  if (dirEl  && r.direction) { dirEl.value = r.direction; onDirChange(dirEl); }
+          var colorEl = row.querySelector('.color-select'); if (colorEl) colorEl.value = r.color || '';
+          var finEl   = row.querySelector('.finish-select'); if (finEl) finEl.value = r.finish || '';
+        }
+
+        /* 수정 모드 배너 표시 */
+        _reviseOrderId = orderId;
+        document.getElementById('reviseBannerId').textContent = orderId;
+        document.getElementById('reviseBanner').classList.add('show');
+        document.getElementById('reviseStatus').style.color = '#1a6b40';
+        document.getElementById('reviseStatus').textContent = '✅ 불러오기 완료!';
+        setTimeout(closeReviseModal, 1000);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        document.getElementById('reviseStatus').style.color = '#e74c3c';
+        document.getElementById('reviseStatus').textContent = '❌ 발주번호를 찾을 수 없습니다';
+      }
+    })
+    .catch(function() {
+      document.getElementById('reviseStatus').style.color = '#e74c3c';
+      document.getElementById('reviseStatus').textContent = '❌ 불러오기 실패 — 네트워크를 확인해주세요';
+    });
+}
+
+function cancelRevise() {
+  _reviseOrderId = '';
+  document.getElementById('reviseBanner').classList.remove('show');
+}
+
 /* ── 컬러 파렛트 모달 ── */
 function openPalette() {
   document.getElementById('paletteModal').classList.add('show');
@@ -1999,7 +2165,8 @@ function submitOrder() {
 
   var rows = collectOrderRows();
   var payload = {
-    action    : 'submit',
+    action    : _reviseOrderId ? 'revise' : 'submit',
+    orderId   : _reviseOrderId || undefined,
     company   : company,
     person    : document.getElementById('customerPerson').value.trim(),
     phone     : phone,
@@ -2019,9 +2186,12 @@ function submitOrder() {
   .then(function(data) {
     if (data.status === 'success') {
       document.getElementById('submitIcon').textContent = '✅';
-      document.getElementById('submitTitle').textContent = '제출 완료!';
-      document.getElementById('submitMsg').textContent = '발주서가 성공적으로 접수되었습니다.';
+      document.getElementById('submitTitle').textContent = _reviseOrderId ? '수정 완료!' : '제출 완료!';
+      document.getElementById('submitMsg').textContent = _reviseOrderId
+        ? '발주 수정이 접수되었습니다.'
+        : '발주서가 성공적으로 접수되었습니다.';
       document.getElementById('submitOrderId').textContent = '발주번호: ' + data.orderId;
+      cancelRevise();
     } else {
       document.getElementById('submitIcon').textContent = '❌';
       document.getElementById('submitTitle').textContent = '제출 실패';
