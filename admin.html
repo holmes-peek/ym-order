@@ -352,6 +352,31 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   -webkit-appearance: none; transition: background 0.15s;
 }
 .btn-factory-link:hover { background: #145a0d; }
+
+/* ── 추가 발주 행 ── */
+.q-extra-toggle {
+  background: #f8f9fc; border-top: 1px dashed #d0d6e8; border-bottom: 1px dashed #d0d6e8;
+  padding: 9px 16px; font-size: 12px; font-weight: 700; color: #1a3a8f;
+  cursor: pointer; transition: background .15s; user-select: none;
+}
+.q-extra-toggle:hover { background: #eef2ff; }
+.q-extra-bar { background: #f0f4ff; border-bottom: 2px solid #d0d6e8; padding: 10px 14px; }
+.q-extra-title { font-size: 12px; font-weight: 700; color: #1a1f2e; margin-bottom: 8px; }
+.q-extra-add-btn {
+  background: #1a3a8f; color: #fff; border: none; border-radius: 7px;
+  padding: 7px 14px; font-size: 11px; font-weight: 700; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif; -webkit-appearance: none;
+}
+.q-extra-save-btn {
+  background: #1a6b10; color: #fff; border: none; border-radius: 7px;
+  padding: 7px 14px; font-size: 11px; font-weight: 700; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif; -webkit-appearance: none;
+}
+.q-extra-status { font-size: 11px; font-weight: 600; }
+.q-extra-input { border: 1.5px solid #d0d6e8; border-radius: 5px; padding: 4px 6px; font-size: 11px; width: 100%; outline: none; font-family: 'Noto Sans KR', sans-serif; text-align: center; }
+.q-extra-del { background: none; border: none; cursor: pointer; color: #ccc; font-size: 13px; -webkit-appearance: none; }
+.q-extra-del:hover { color: #c0392b; }
+@media print { .q-extra-toggle, .q-extra-bar, .no-print { display: none !important; } }
 </style>
 </head>
 <body>
@@ -469,6 +494,26 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
                 </tr>
               </tfoot>
             </table>
+          </div>
+          <!-- 추가 발주 행 직접 입력 토글 -->
+          <div class="q-extra-toggle no-print" onclick="toggleExtraBar()">➕ 추가 발주 행 직접 입력</div>
+          <div class="q-extra-bar no-print" id="qExtraBar" style="display:none">
+            <div class="q-extra-title">추가 발주 행 입력</div>
+            <div style="overflow-x:auto">
+              <table class="q-table">
+                <thead><tr>
+                  <th>품목</th><th>타입</th><th>도어위치</th><th>컬러</th><th>도장</th>
+                  <th>가로<small>mm</small></th><th>세로<small>mm</small></th>
+                  <th>수량<small>EA</small></th><th>단가<small>원</small></th><th>금액<small>원</small></th><th></th>
+                </tr></thead>
+                <tbody id="qExtraBody"></tbody>
+              </table>
+            </div>
+            <div style="padding:8px 14px;display:flex;gap:8px;align-items:center">
+              <button type="button" class="q-extra-add-btn" onclick="addExtraRow()">+ 행 추가</button>
+              <button type="button" class="q-extra-save-btn" onclick="saveExtraRows()">💾 Sheets에 추가 저장</button>
+              <span class="q-extra-status" id="qExtraStatus"></span>
+            </div>
           </div>
           <!-- 합계 -->
           <div class="q-summary">
