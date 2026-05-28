@@ -502,6 +502,26 @@
     user-select: none;
   }
   .btn-drawing-attach:hover { background: var(--steel-light); }
+
+  /* AI 도면 분석 버튼 */
+  .btn-ai-analyze {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: linear-gradient(135deg, #4a6fa5, #3a5a8f);
+    color: #fff; border: none; border-radius: 8px;
+    padding: 7px 14px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+    -webkit-appearance: none; transition: opacity .2s;
+  }
+  .btn-ai-analyze:hover { opacity: .85; }
+
+  /* AI 모달 */
+  .ai-modal-box { max-width: 520px; max-height: 90vh; overflow-y: auto; }
+  .ai-drop-zone {
+    border: 1.5px dashed #d0d6e8; border-radius: 10px;
+    padding: 20px; text-align: center; cursor: pointer;
+    background: #f5f6f8; margin: 12px 0; transition: all .2s;
+  }
+  .ai-drop-zone:hover { border-color: #4a6fa5; background: #eef2f8; }
   .drawing-hint { font-size: 11px; color: var(--text-muted); }
 
   /* 미리보기 그리드 */
@@ -831,9 +851,62 @@
       <label class="order-etc-label">도면 첨부</label>
       <label class="btn-drawing-attach" for="drawingInput">📎 이미지 선택</label>
       <input type="file" id="drawingInput" accept="image/*" multiple style="display:none" onchange="handleDrawing(this)">
+      <button type="button" class="btn-ai-analyze" onclick="openAiModal()">🤖 AI 도면 분석 → 발주 행 자동 입력</button>
       <span class="drawing-hint">JPG · PNG · GIF 등 이미지 파일 (여러 장 가능)</span>
     </div>
     <div class="drawing-preview" id="drawingPreview"></div>
+  </div>
+
+  <!-- AI 도면 분석 모달 -->
+  <div id="aiModal" class="modal-overlay" onclick="closeAiModalBg(event)">
+    <div class="modal-box ai-modal-box">
+      <div style="font-size:22px;margin-bottom:8px">🤖</div>
+      <div class="modal-title">AI 도면 분석</div>
+      <div class="modal-sub">도면 이미지를 업로드하면 치수·손잡이위치·수량을<br>자동으로 읽어 발주 행을 채워드립니다</div>
+
+      <!-- 업로드 존 -->
+      <div id="aiDropZone" class="ai-drop-zone" onclick="document.getElementById('aiFileIn').click()">
+        <div style="font-size:28px">📐</div>
+        <div style="margin-top:6px;font-size:13px;color:#6b7694">클릭하여 도면 이미지 선택</div>
+        <div style="font-size:11px;color:#9aa3b8;margin-top:3px">JPG · PNG · GIF</div>
+        <input type="file" id="aiFileIn" accept="image/*" style="display:none" onchange="onAiFile(this.files[0])">
+      </div>
+
+      <!-- 미리보기 -->
+      <div id="aiPreview" style="display:none;margin:10px 0;border:1px solid #e4e8f0;border-radius:8px;overflow:hidden">
+        <img id="aiPreviewImg" src="" alt="도면 미리보기" style="width:100%;max-height:200px;object-fit:contain;background:#f5f6f8;display:block">
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f5f6f8;border-top:1px solid #e4e8f0;font-size:11px;color:#6b7694">
+          <span id="aiFileName">—</span>
+          <button type="button" style="margin-left:auto;font-size:11px;background:none;border:none;color:#c0392b;cursor:pointer;-webkit-appearance:none" onclick="resetAiFile()">✕ 제거</button>
+        </div>
+      </div>
+
+      <!-- 상태 -->
+      <div id="aiStatus" style="display:none;padding:9px 12px;border-radius:8px;font-size:12px;margin:8px 0;text-align:left"></div>
+
+      <!-- 인식 결과 테이블 -->
+      <div id="aiResultWrap" style="display:none;margin:10px 0;max-height:220px;overflow:auto;border:1px solid #e4e8f0;border-radius:8px">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:500px">
+          <thead>
+            <tr style="background:#2c3040">
+              <th style="color:#c0c8dc;padding:7px 5px;text-align:center;border-right:1px solid rgba(255,255,255,.06);white-space:nowrap">No.</th>
+              <th style="color:#c0c8dc;padding:7px 5px;text-align:center;border-right:1px solid rgba(255,255,255,.06);white-space:nowrap">타입</th>
+              <th style="color:#c0c8dc;padding:7px 5px;text-align:center;border-right:1px solid rgba(255,255,255,.06);white-space:nowrap">가로mm</th>
+              <th style="color:#c0c8dc;padding:7px 5px;text-align:center;border-right:1px solid rgba(255,255,255,.06);white-space:nowrap">세로mm</th>
+              <th style="color:#c0c8dc;padding:7px 5px;text-align:center;border-right:1px solid rgba(255,255,255,.06);white-space:nowrap">수량</th>
+              <th style="color:#c0c8dc;padding:7px 5px;text-align:center;white-space:nowrap">손잡이위치</th>
+            </tr>
+          </thead>
+          <tbody id="aiResultBody"></tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
+        <button type="button" onclick="closeAiModal()" style="background:#f0f2f7;color:#2d3142;border:none;border-radius:8px;padding:9px 20px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;-webkit-appearance:none">취소</button>
+        <button type="button" id="btnAiAnalyze" onclick="runAiAnalyze()" style="background:linear-gradient(135deg,#4a6fa5,#3a5a8f);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;-webkit-appearance:none">🤖 AI 분석 시작</button>
+        <button type="button" id="btnAiApply" onclick="applyAiRows()" style="display:none;background:linear-gradient(135deg,#1a6b10,#145c35);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;-webkit-appearance:none">✅ 발주 행에 적용</button>
+      </div>
+    </div>
   </div>
 
   <!-- 유효성 오류 요약 -->
@@ -882,6 +955,9 @@
            style="width:100%;border-radius:8px;">
     </div>
     <button type="button" class="modal-close-btn" style="margin-top:14px;font-size:13px;color:#4a5272;font-weight:600" onclick="closePaletteBtn()">닫기</button>
+    <p style="margin-top:12px;font-size:11px;color:#9aa3b8;line-height:1.6;text-align:center;padding:0 8px">
+      ⚠️ 주의: 실제 샘플과 모니터 환경에 따라, 컬러가 다소 차이가 있어 보입니다. 참고 바랍니다.
+    </p>
   </div>
 </div>
 
@@ -2001,6 +2077,174 @@ function loadForRevise() {
 function cancelRevise() {
   _reviseOrderId = '';
   document.getElementById('reviseBanner').classList.remove('show');
+}
+
+/* ── AI 도면 분석 ── */
+var _aiB64   = null;
+var _aiMime  = 'image/png';
+var _aiRows  = [];
+
+function openAiModal()       { document.getElementById('aiModal').classList.add('show'); }
+function closeAiModal()      { document.getElementById('aiModal').classList.remove('show'); }
+function closeAiModalBg(e)   { if (e.target === document.getElementById('aiModal')) closeAiModal(); }
+
+function onAiFile(f) {
+  if (!f) return;
+  _aiMime = f.type || 'image/jpeg';
+  var r = new FileReader();
+  r.onload = function(e) {
+    _aiB64 = e.target.result.split(',')[1];
+    document.getElementById('aiPreviewImg').src = e.target.result;
+    document.getElementById('aiFileName').textContent = f.name + ' (' + Math.round(f.size/1024) + ' KB)';
+    document.getElementById('aiPreview').style.display = 'block';
+    document.getElementById('aiDropZone').style.display = 'none';
+    document.getElementById('aiStatus').style.display = 'none';
+    document.getElementById('aiResultWrap').style.display = 'none';
+    document.getElementById('btnAiApply').style.display = 'none';
+  };
+  r.readAsDataURL(f);
+}
+
+function resetAiFile() {
+  _aiB64 = null;
+  document.getElementById('aiPreview').style.display = 'none';
+  document.getElementById('aiDropZone').style.display = 'block';
+  document.getElementById('aiFileIn').value = '';
+  document.getElementById('aiResultWrap').style.display = 'none';
+  document.getElementById('btnAiApply').style.display = 'none';
+  document.getElementById('aiStatus').style.display = 'none';
+}
+
+function setAiStatus(msg, color, bg) {
+  var el = document.getElementById('aiStatus');
+  el.style.display = 'block';
+  el.style.color = color;
+  el.style.background = bg;
+  el.style.border = '1px solid ' + color + '44';
+  el.innerHTML = msg;
+}
+
+function runAiAnalyze() {
+  if (!_aiB64) { setAiStatus('⚠️ 도면 이미지를 먼저 업로드해주세요', '#c0392b', '#fff5f5'); return; }
+  document.getElementById('btnAiAnalyze').disabled = true;
+  document.getElementById('btnAiApply').style.display = 'none';
+  document.getElementById('aiResultWrap').style.display = 'none';
+  setAiStatus('🤖 AI가 도면을 분석 중입니다... 치수·손잡이위치·수량을 읽고 있어요', '#1a3a8f', '#eef2f8');
+
+  var prompt = '이 이미지는 알루미늄 금속엣지(21T) 발주용 도면입니다.\n' +
+    '도면의 모든 도어/패널 치수를 읽어 JSON 배열로만 응답하세요. JSON 외 텍스트 없음.\n\n' +
+    '읽을 항목:\n' +
+    '- sizeW: 가로(mm) 상단 치수선\n' +
+    '- sizeH: 세로(mm) 측면 치수선\n' +
+    '- type: 손잡이 있으면 "handle", 엣지만이면 "edge"\n' +
+    '- direction: "left"/"right"/"maida"/"none"\n' +
+    '- handlePos: 타원 안 숫자(손잡이 위치mm)\n' +
+    '- qty: 반복 수량 (기본 1)\n\n' +
+    '예시: [{"no":1,"item":"21T 금속","sizeW":519,"sizeH":2130,"type":"handle","direction":"none","handlePos":"900","qty":1}]';
+
+  fetch(APPS_SCRIPT_URL.replace('/exec', '').replace('https://script.google.com/macros/s/', '').length > 0
+    ? 'https://api.anthropic.com/v1/messages'
+    : 'https://api.anthropic.com/v1/messages',
+  {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: _aiMime, data: _aiB64 } },
+          { type: 'text',  text: prompt }
+        ]
+      }]
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.error) throw new Error(data.error.message);
+    var raw = (data.content||[]).map(function(c){ return c.text||''; }).join('').trim();
+    var clean = raw.replace(/```json|```/g,'').trim();
+    var rows;
+    try { rows = JSON.parse(clean); }
+    catch(e) {
+      var m = clean.match(/\[[\s\S]*\]/);
+      if (m) rows = JSON.parse(m[0]);
+      else throw new Error('JSON 파싱 실패');
+    }
+    if (!Array.isArray(rows)||!rows.length) throw new Error('인식된 항목 없음');
+    _aiRows = rows;
+    renderAiResult(rows);
+    setAiStatus('✅ ' + rows.length + '개 항목 인식 완료! 내용 확인 후 [발주 행에 적용] 버튼을 눌러주세요', '#1a6b10', '#f0fff4');
+    document.getElementById('btnAiApply').style.display = 'inline-block';
+  })
+  .catch(function(err) {
+    setAiStatus('❌ 분석 실패: ' + err.message, '#c0392b', '#fff5f5');
+  })
+  .finally(function() {
+    document.getElementById('btnAiAnalyze').disabled = false;
+  });
+}
+
+function renderAiResult(rows) {
+  var tbody = document.getElementById('aiResultBody');
+  tbody.innerHTML = '';
+  rows.forEach(function(r, i) {
+    var tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid #edf0f8';
+    tr.style.background = i%2===0 ? '#fff' : '#f8f9fc';
+    var typeLabel = r.type==='handle' ? '손잡이 도어' : '엣지만';
+    tr.innerHTML =
+      '<td style="padding:6px 5px;text-align:center;font-family:monospace;border-right:1px solid #edf0f8">' + (r.no||i+1) + '</td>' +
+      '<td style="padding:6px 5px;text-align:center;border-right:1px solid #edf0f8">' + typeLabel + '</td>' +
+      '<td style="padding:6px 5px;text-align:center;font-family:monospace;font-weight:600;border-right:1px solid #edf0f8">' + (r.sizeW||'—') + '</td>' +
+      '<td style="padding:6px 5px;text-align:center;font-family:monospace;font-weight:600;border-right:1px solid #edf0f8">' + (r.sizeH||'—') + '</td>' +
+      '<td style="padding:6px 5px;text-align:center;border-right:1px solid #edf0f8">' + (r.qty||1) + '</td>' +
+      '<td style="padding:6px 5px;text-align:center;font-size:10px;color:#6b7694">' + (r.handlePos||'—') + '</td>';
+    tbody.appendChild(tr);
+  });
+  document.getElementById('aiResultWrap').style.display = 'block';
+}
+
+function applyAiRows() {
+  if (!_aiRows || !_aiRows.length) return;
+  _aiRows.forEach(function(r) {
+    var qty = parseInt(r.qty) || 1;
+    for (var q = 0; q < qty; q++) {
+      addRow();
+      var row = document.getElementById('row_' + rowCount);
+      if (!row) continue;
+      /* 가로/세로 입력 */
+      var wInputs = row.querySelectorAll('input[type=number], input[type=text]');
+      var wCell = row.querySelectorAll('td')[2];
+      var hCell = row.querySelectorAll('td')[3];
+      if (wCell && wCell.querySelector('input')) wCell.querySelector('input').value = r.sizeW || '';
+      if (hCell && hCell.querySelector('input')) hCell.querySelector('input').value = r.sizeH || '';
+      /* 수량 */
+      var qtyIn = row.querySelector('.qty-input');
+      if (qtyIn) qtyIn.value = 1;
+      /* 타입 */
+      var typeEl = row.querySelector('.type-select');
+      if (typeEl && r.type) { typeEl.value = r.type; onTypeChange(typeEl); }
+      /* 손잡이 위치 */
+      if (r.handlePos) {
+        var hposEl = row.querySelector('.hpos-mm');
+        if (hposEl) hposEl.value = r.handlePos.replace(/[^0-9]/g,'');
+      }
+    }
+  });
+  closeAiModal();
+  /* 도면 이미지도 미리보기에 추가 */
+  if (_aiB64) {
+    var img = new Image();
+    img.src = 'data:' + _aiMime + ';base64,' + _aiB64;
+    img.style.cssText = 'max-width:120px;max-height:80px;border-radius:6px;border:1px solid #e4e8f0;object-fit:contain';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:inline-block;margin:4px;position:relative';
+    wrap.appendChild(img);
+    document.getElementById('drawingPreview').appendChild(wrap);
+  }
+  alert('✅ ' + _aiRows.length + '개 항목이 발주 행에 추가되었습니다!\n컬러와 도장 형태를 선택해주세요.');
 }
 
 /* ── 컬러 파렛트 모달 ── */
