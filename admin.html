@@ -1055,6 +1055,185 @@ function doCancel() {
     document.getElementById('doCancelBtn').disabled = false;
   });
 }
+
+/* ── 추가 발주 행 ── */
+function toggleExtraBar() {
+  var bar = document.getElementById('qExtraBar');
+  if (bar.style.display === 'none' || bar.style.display === '') {
+    bar.style.display = 'block';
+    if (document.getElementById('qExtraBody').children.length === 0) addExtraRow();
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+var extraRowCount = 0;
+
+function addExtraRow() {
+  extraRowCount++;
+  var n = extraRowCount;
+  var tbody = document.getElementById('qExtraBody');
+  var tr = document.createElement('tr');
+  tr.id = 'exr_' + n;
+  tr.innerHTML =
+    '<td><input type="text" class="q-extra-input" value="21T 금속" style="width:72px"></td>' +
+    '<td><select class="q-extra-input" style="width:82px" onchange="calcExtra(' + n + ')">' +
+      '<option value="">선택</option>' +
+      '<option value="edge">엣지만</option>' +
+      '<option value="handle">손잡이 도어</option>' +
+    '</select></td>' +
+    '<td><select class="q-extra-input" style="width:72px">' +
+      '<option value="">선택</option>' +
+      '<option value="maida">마이다</option>' +
+      '<option value="left">좌경</option>' +
+      '<option value="right">우경</option>' +
+      '<option value="none">구분없음</option>' +
+    '</select></td>' +
+    '<td><select class="q-extra-input" style="width:102px">' +
+      '<option value="">선택</option>' +
+      '<option value="A36">A36 Gold</option>' +
+      '<option value="A44">A44 Dark Nickel</option>' +
+      '<option value="A48">A48 Bronze</option>' +
+      '<option value="A115">A115 Midnight</option>' +
+      '<option value="A116">A116 Dark Bronze</option>' +
+      '<option value="A50">A50 Black</option>' +
+    '</select></td>' +
+    '<td><select class="q-extra-input" style="width:100px" onchange="calcExtra(' + n + ')">' +
+      '<option value="">선택</option>' +
+      '<option value="anodize">아노다이징</option>' +
+      '<option value="fluoro">불소도장</option>' +
+    '</select></td>' +
+    '<td><input type="number" class="q-extra-input" placeholder="기입" style="width:55px" oninput="calcExtra(' + n + ')"></td>' +
+    '<td><input type="number" class="q-extra-input" placeholder="기입" style="width:55px" oninput="calcExtra(' + n + ')"></td>' +
+    '<td><input type="number" class="q-extra-input q-extra-qty" placeholder="기입" style="width:46px" oninput="calcExtra(' + n + ')"></td>' +
+    '<td><input type="number" class="q-extra-input q-extra-unit" placeholder="자동" style="width:72px" oninput="calcExtra(' + n + ')"></td>' +
+    '<td class="q-amount q-extra-amt" id="examt_' + n + '">—</td>' +
+    '<td><button type="button" class="q-extra-del" onclick="document.getElementById(\'exr_' + n + '\').remove(); qTotalRecalc();">✕</button></td>';
+  tbody.appendChild(tr);
+}
+
+function calcExtra(n) {
+  var row = document.getElementById('exr_' + n);
+  if (!row) return;
+  var cells = row.querySelectorAll('td');
+  var w    = parseFloat(cells[5].querySelector('input').value) || 0;
+  var h    = parseFloat(cells[6].querySelector('input').value) || 0;
+  var qty  = parseFloat(cells[7].querySelector('input').value) || 0;
+  var uEl  = cells[8].querySelector('input');
+  var unit = parseFloat(uEl ? uEl.value : 0) || 0;
+  /* 단가 빈칸이면 자동계산 */
+  var finSel = cells[4].querySelector('select');
+  var fin = finSel ? finSel.value : '';
+  if (!unit && w && h && uEl) {
+    unit = Math.round(((w + h) * 2 * 39) * (fin === 'fluoro' ? 1.15 : 1) / 10) * 10;
+    uEl.value = unit;
+  }
+  var amtEl = document.getElementById('examt_' + n);
+  if (amtEl) amtEl.textContent = (unit && qty) ? '₩ ' + (unit * qty).toLocaleString() : '—';
+}
+
+function saveExtraRows() {
+  if (!window._currentOrderId) {
+    alert('먼저 발주건을 선택해주세요.');
+    return;
+  }
+  var o = null;
+  if (window._orders) {
+    for (var i = 0; i < window._orders.length; i++) {
+      if (window._orders[i].orderId === window._currentOrderId) { o = window._orders[i]; break; }
+    }
+  }
+
+  var rows = [];
+  var baseQRowCount = document.querySelectorAll('#qTableBody tr').length;
+  var extraTrs = document.querySelectorAll('#qExtraBody tr');
+
+  for (var j = 0; j < extraTrs.length; j++) {
+    var cells = extraTrs[j].querySelectorAll('td');
+    var sels  = extraTrs[j].querySelectorAll('select');
+    var inps  = extraTrs[j].querySelectorAll('input');
+    rows.push({
+      no        : baseQRowCount + j + 1,
+      item      : inps[0] ? inps[0].value || '21T 금속' : '21T 금속',
+      type      : sels[0] ? sels[0].value : '',
+      direction : sels[1] ? sels[1].value : '',
+      color     : sels[2] ? sels[2].value : '',
+      finish    : sels[3] ? sels[3].value : '',
+      sizeW     : inps[1] ? inps[1].value : '',
+      sizeH     : inps[2] ? inps[2].value : '',
+      qty       : inps[3] ? inps[3].value : '',
+      boring: '', handleLen: '', handlePos: ''
+    });
+  }
+
+  if (!rows.length) { alert('추가할 행이 없습니다.'); return; }
+
+  var statusEl = document.getElementById('qExtraStatus');
+  statusEl.style.color = '#1a3a8f';
+  statusEl.textContent = '저장 중...';
+
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+      action    : 'addExtra',
+      orderId   : window._currentOrderId,
+      company   : o ? o.company   : '',
+      person    : o ? o.person    : '',
+      phone     : o ? o.phone     : '',
+      quoteDate : o ? o.quoteDate : '',
+      rows      : rows
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.status === 'success') {
+      statusEl.style.color = '#1a6b10';
+      statusEl.textContent = '✅ ' + rows.length + '행 저장 완료!';
+      /* 견적서 테이블에 즉시 반영 */
+      for (var k = 0; k < rows.length; k++) {
+        qRowCount++;
+        var r = rows[k]; var n = qRowCount;
+        var w = parseFloat(r.sizeW) || 0;
+        var h = parseFloat(r.sizeH) || 0;
+        var finKey = r.finish || '';
+        var base = (w && h) ? ((w + h) * 2 * 39) : 0;
+        var autoUnit = base ? Math.round(base * (finKey === 'fluoro' ? 1.15 : 1) / 10) * 10 : 0;
+        var qty = parseFloat(r.qty) || 0;
+        var typeLabel = r.type === 'edge' ? '엣지만' : r.type === 'handle' ? '손잡이 도어' : (r.type || '—');
+        var dirLabel  = { maida:'마이다', left:'좌경', right:'우경', none:'구분없음', '':'—' }[r.direction] || '—';
+        var finLabel  = r.finish === 'anodize' ? '아노다이징' : r.finish === 'fluoro' ? '불소도장' : (r.finish || '—');
+        var tr = document.createElement('tr');
+        tr.id = 'qr_' + n;
+        tr.style.background = '#fffbe8';
+        tr.innerHTML =
+          '<td style="font-family:\'DM Mono\',monospace;font-size:10px;color:#e07040">+' + r.no + '</td>' +
+          '<td style="font-weight:600">' + (r.item || '21T 금속') + '</td>' +
+          '<td>' + typeLabel + '</td><td>' + dirLabel + '</td>' +
+          '<td>' + (r.color || '—') + '</td><td>' + finLabel + '</td>' +
+          '<td style="font-family:\'DM Mono\',monospace">' + (r.sizeW || '—') + '</td>' +
+          '<td style="font-family:\'DM Mono\',monospace">' + (r.sizeH || '—') + '</td>' +
+          '<td>—</td><td>—</td><td>—</td>' +
+          '<td><input type="number" class="q-input q-qty" value="' + (r.qty || '') + '" style="width:46px" oninput="qRecalc(' + n + ')"></td>' +
+          '<td><input type="number" class="q-input q-unit" value="' + (autoUnit || '') + '" style="width:72px" data-w="' + w + '" data-h="' + h + '" data-fin="' + finKey + '" oninput="qRecalc(' + n + ')"></td>' +
+          '<td class="q-amount" id="qa_' + n + '">' + (autoUnit && qty ? '₩ ' + (autoUnit * qty).toLocaleString() : '—') + '</td>';
+        document.getElementById('qTableBody').appendChild(tr);
+        qRecalc(n);
+      }
+      qTotalRecalc();
+      /* 추가 입력 폼 초기화 */
+      document.getElementById('qExtraBody').innerHTML = '';
+      extraRowCount = 0;
+      setTimeout(function() { statusEl.textContent = ''; }, 3000);
+    } else {
+      statusEl.style.color = '#c0392b';
+      statusEl.textContent = '❌ ' + (d.message || '저장 실패');
+    }
+  })
+  .catch(function() {
+    statusEl.style.color = '#c0392b';
+    statusEl.textContent = '❌ 네트워크 오류';
+  });
+}
 </script>
 
 <!-- 취소 확인 모달 -->
