@@ -894,6 +894,8 @@
               <th style="color:#c0c8dc;padding:7px 5px;text-align:center;border-right:1px solid rgba(255,255,255,.06);white-space:nowrap">가로mm</th>
               <th style="color:#c0c8dc;padding:7px 5px;text-align:center;border-right:1px solid rgba(255,255,255,.06);white-space:nowrap">세로mm</th>
               <th style="color:#c0c8dc;padding:7px 5px;text-align:center;border-right:1px solid rgba(255,255,255,.06);white-space:nowrap">수량</th>
+              <th style="color:#c0c8dc;padding:7px 5px;text-align:center;border-right:1px solid rgba(255,255,255,.06);white-space:nowrap">컬러</th>
+              <th style="color:#c0c8dc;padding:7px 5px;text-align:center;border-right:1px solid rgba(255,255,255,.06);white-space:nowrap">도장</th>
               <th style="color:#c0c8dc;padding:7px 5px;text-align:center;white-space:nowrap">손잡이위치</th>
             </tr>
           </thead>
@@ -2131,48 +2133,24 @@ function runAiAnalyze() {
   document.getElementById('aiResultWrap').style.display = 'none';
   setAiStatus('🤖 AI가 도면을 분석 중입니다... 치수·손잡이위치·수량을 읽고 있어요', '#1a3a8f', '#eef2f8');
 
-  var prompt = '이 이미지는 알루미늄 금속엣지(21T) 발주용 도면입니다.\n' +
-    '도면의 모든 도어/패널 치수를 읽어 JSON 배열로만 응답하세요. JSON 외 텍스트 없음.\n\n' +
-    '읽을 항목:\n' +
-    '- sizeW: 가로(mm) 상단 치수선\n' +
-    '- sizeH: 세로(mm) 측면 치수선\n' +
-    '- type: 손잡이 있으면 "handle", 엣지만이면 "edge"\n' +
-    '- direction: "left"/"right"/"maida"/"none"\n' +
-    '- handlePos: 타원 안 숫자(손잡이 위치mm)\n' +
-    '- qty: 반복 수량 (기본 1)\n\n' +
-    '예시: [{"no":1,"item":"21T 금속","sizeW":519,"sizeH":2130,"type":"handle","direction":"none","handlePos":"900","qty":1}]';
+  var prompt = 'Apps Script를 통해 분석 요청';
 
-  fetch(APPS_SCRIPT_URL.replace('/exec', '').replace('https://script.google.com/macros/s/', '').length > 0
-    ? 'https://api.anthropic.com/v1/messages'
-    : 'https://api.anthropic.com/v1/messages',
-  {
+  fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: _aiMime, data: _aiB64 } },
-          { type: 'text',  text: prompt }
-        ]
-      }]
+      action      : 'analyzeDrawing',
+      imageBase64 : _aiB64,
+      imageMime   : _aiMime
     })
   })
   .then(function(r) { return r.json(); })
   .then(function(data) {
-    if (data.error) throw new Error(data.error.message);
-    var raw = (data.content||[]).map(function(c){ return c.text||''; }).join('').trim();
-    var clean = raw.replace(/```json|```/g,'').trim();
-    var rows;
-    try { rows = JSON.parse(clean); }
-    catch(e) {
-      var m = clean.match(/\[[\s\S]*\]/);
-      if (m) rows = JSON.parse(m[0]);
-      else throw new Error('JSON 파싱 실패');
-    }
-    if (!Array.isArray(rows)||!rows.length) throw new Error('인식된 항목 없음');
+    if (data.error) throw new Error(data.error.message || 'API 오류');
+    if (data.status !== 'success') throw new Error(data.message || '분석 실패');
+
+    var rows = data.rows;
+    if (!Array.isArray(rows) || !rows.length) throw new Error('인식된 항목이 없습니다');
+
     _aiRows = rows;
     renderAiResult(rows);
     setAiStatus('✅ ' + rows.length + '개 항목 인식 완료! 내용 확인 후 [발주 행에 적용] 버튼을 눌러주세요', '#1a6b10', '#f0fff4');
@@ -2200,6 +2178,8 @@ function renderAiResult(rows) {
       '<td style="padding:6px 5px;text-align:center;font-family:monospace;font-weight:600;border-right:1px solid #edf0f8">' + (r.sizeW||'—') + '</td>' +
       '<td style="padding:6px 5px;text-align:center;font-family:monospace;font-weight:600;border-right:1px solid #edf0f8">' + (r.sizeH||'—') + '</td>' +
       '<td style="padding:6px 5px;text-align:center;border-right:1px solid #edf0f8">' + (r.qty||1) + '</td>' +
+      '<td style="padding:6px 5px;text-align:center;border-right:1px solid #edf0f8;font-weight:600;color:#1a1f2e">' + (r.color||'—') + '</td>' +
+      '<td style="padding:6px 5px;text-align:center;border-right:1px solid #edf0f8;font-size:10px;color:#4a6fa5">' + (r.finish==='anodize'?'아노다이징':r.finish==='fluoro'?'불소도장':(r.finish||'—')) + '</td>' +
       '<td style="padding:6px 5px;text-align:center;font-size:10px;color:#6b7694">' + (r.handlePos||'—') + '</td>';
     tbody.appendChild(tr);
   });
@@ -2231,6 +2211,12 @@ function applyAiRows() {
         var hposEl = row.querySelector('.hpos-mm');
         if (hposEl) hposEl.value = r.handlePos.replace(/[^0-9]/g,'');
       }
+      /* 컬러 */
+      var colorEl = row.querySelector('.color-select');
+      if (colorEl && r.color) colorEl.value = r.color;
+      /* 도장 */
+      var finEl = row.querySelector('.finish-select');
+      if (finEl && r.finish) finEl.value = r.finish;
     }
   });
   closeAiModal();
