@@ -87,7 +87,12 @@ tbody td:last-child { border-right: none; }
 .val-muted { color: var(--muted); font-size: 11px; }
 
 /* ── 구분선 (품목 그룹) ── */
+tbody tr.row-w.extra  { background: #fffbe8; }
+tbody tr.row-h1.extra { background: #fffae0; }
+tbody tr.row-h2.extra { background: #fffbd0; }
+.badge-extra { display:inline-block; font-size:9px; font-weight:700; padding:1px 6px; border-radius:10px; background:#fef3c7; color:#92400e; margin-left:4px; vertical-align:middle; }
 tbody tr.group-divider td { border-top: 2px solid var(--steel-mid) !important; }
+tbody tr.extra-divider td { border-top: 2px dashed #f0b86e !important; }
 
 /* ── 하단 납품 정보 ── */
 .delivery-section {
@@ -336,6 +341,7 @@ function renderFactory(order) {
   tbody.innerHTML = '';
   var rows = order.rows || [];
 
+  var prevExtra = false;
   for (var i = 0; i < rows.length; i++) {
     var r   = rows[i];
     var no  = r.no || (i + 1);
@@ -343,6 +349,10 @@ function renderFactory(order) {
     var h   = parseFloat(r.sizeH) || 0;
     var qty = parseFloat(r.qty)   || 1;
     var isMaida = (r.direction === 'maida' || r.direction === '마이다');
+    var isExtra = (r.rowStatus === '추가');
+    var extraBadge = isExtra ? '<span class="badge-extra">추가</span>' : '';
+    var extraClass = isExtra ? ' extra' : '';
+    var dividerClass = (i === 0 ? ' group-divider' : (isExtra && !prevExtra ? ' extra-divider' : ''));
 
     if (isMaida) {
       /* ── 마이다: 세로/가로 반전 ──
@@ -355,9 +365,9 @@ function renderFactory(order) {
 
       /* 세로 행 */
       var trS = document.createElement('tr');
-      trS.className = 'row-w' + (i === 0 ? ' group-divider' : '');
+      trS.className = 'row-w' + dividerClass + extraClass;
       trS.innerHTML =
-        '<td><span class="row-badge badge-w">세로</span></td>' +
+        '<td><span class="row-badge badge-w">세로</span>' + extraBadge + '</td>' +
         '<td class="val-mono">' + no + '</td>' +
         '<td class="val-bold">' + (r.item||'21T 금속') + '</td>' +
         '<td class="val-mono val-bold">' + sSize + ' mm</td>' +
@@ -372,9 +382,9 @@ function renderFactory(order) {
 
       /* 가로① 행 */
       var trG1 = document.createElement('tr');
-      trG1.className = 'row-h1';
+      trG1.className = 'row-h1' + extraClass;
       trG1.innerHTML =
-        '<td><span class="row-badge badge-h1">가로①</span></td>' +
+        '<td><span class="row-badge badge-h1">가로①</span>' + extraBadge + '</td>' +
         '<td class="val-mono">' + no + '</td>' +
         '<td class="val-bold">' + (r.item||'21T 금속') + '</td>' +
         '<td class="val-mono val-bold">' + gSize + ' mm</td>' +
@@ -391,9 +401,9 @@ function renderFactory(order) {
 
       /* 가로② 행 (보링) */
       var trG2 = document.createElement('tr');
-      trG2.className = 'row-h2';
+      trG2.className = 'row-h2' + extraClass;
       trG2.innerHTML =
-        '<td><span class="row-badge badge-h2">가로②</span></td>' +
+        '<td><span class="row-badge badge-h2">가로②</span>' + extraBadge + '</td>' +
         '<td class="val-mono">' + no + '</td>' +
         '<td class="val-bold">' + (r.item||'21T 금속') + '</td>' +
         '<td class="val-mono val-bold">' + gSize + ' mm</td>' +
@@ -415,9 +425,9 @@ function renderFactory(order) {
       var wQty  = qty * 2;
 
       var trW = document.createElement('tr');
-      trW.className = 'row-w' + (i === 0 ? ' group-divider' : '');
+      trW.className = 'row-w' + dividerClass + extraClass;
       trW.innerHTML =
-        '<td><span class="row-badge badge-w">가로</span></td>' +
+        '<td><span class="row-badge badge-w">가로</span>' + extraBadge + '</td>' +
         '<td class="val-mono">' + no + '</td>' +
         '<td class="val-bold">' + (r.item||'21T 금속') + '</td>' +
         '<td class="val-mono val-bold">' + wSize + ' mm</td>' +
@@ -431,9 +441,9 @@ function renderFactory(order) {
       tbody.appendChild(trW);
 
       var trH1 = document.createElement('tr');
-      trH1.className = 'row-h1';
+      trH1.className = 'row-h1' + extraClass;
       trH1.innerHTML =
-        '<td><span class="row-badge badge-h1">세로①</span></td>' +
+        '<td><span class="row-badge badge-h1">세로①</span>' + extraBadge + '</td>' +
         '<td class="val-mono">' + no + '</td>' +
         '<td class="val-bold">' + (r.item||'21T 금속') + '</td>' +
         '<td class="val-mono val-bold">' + (h||'—') + ' mm</td>' +
@@ -449,9 +459,9 @@ function renderFactory(order) {
       tbody.appendChild(trH1);
 
       var trH2 = document.createElement('tr');
-      trH2.className = 'row-h2';
+      trH2.className = 'row-h2' + extraClass;
       trH2.innerHTML =
-        '<td><span class="row-badge badge-h2">세로②</span></td>' +
+        '<td><span class="row-badge badge-h2">세로②</span>' + extraBadge + '</td>' +
         '<td class="val-mono">' + no + '</td>' +
         '<td class="val-bold">' + (r.item||'21T 금속') + '</td>' +
         '<td class="val-mono val-bold">' + (h||'—') + ' mm</td>' +
